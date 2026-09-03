@@ -1,0 +1,339 @@
+//! Standard Epson ESC/POS dialect implementation.
+
+use std::sync::atomic::{AtomicU8, Ordering};
+
+use crate::codepage::CodePage;
+use crate::command::{
+    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
+    QrCorrectionLevel, QrData, UnderlineMode,
+};
+use crate::dialect::Dialect;
+use crate::error::{PapermintError, Result};
+
+// Standard ESC/POS Control Characters
+const ESC: u8 = 0x1B; // 27 in decimal
+const GS:  u8 = 0x1D; // 29 in decimal
+const LF:  u8 = 0x0A; // 10 in decimal (Newline '\n')
+
+/// Standard Epson ESC/POS dialect encoder.
+///
+/// Converts abstract [`Command`] variants into standard ESC/POS byte sequences.
+/// State like character dimensions (double width/height) is maintained atomically
+/// so that [`Dialect::encode`] can remain concurrent and thread-safe.
+#[derive(Debug, Default)]
+pub struct EscPos {
+    /// Bitmask for character dimensions via `GS ! n`:
+    /// - bits 0–3: height multiplier (0 = 1x, 1 = 2x)
+    /// - bits 4–7: width multiplier (0 = 1x, 1 = 2x)
+    char_size_mask: AtomicU8,
+}
+
+impl EscPos {
+    /// Creates a new [`EscPos`] dialect encoder with default settings.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            char_size_mask: AtomicU8::new(0),
+        }
+    }
+
+    /// Encodes a 1D barcode into ESC/POS Function B commands (`GS h`, `GS w`, `GS k`).
+    fn encode_barcode(&self, data: &BarcodeData, buf: &mut Vec<u8>) -> Result<()> {
+        let payload = data.data.as_bytes();
+
+        // Modern ESC/POS Function B barcode system codes:
+        // GS k m n d1..dk
+        let system_code = match data.system {
+            BarcodeSystem::UpcA => 65,
+            BarcodeSystem::UpcE => 66,
+            BarcodeSystem::Ean13 => 67,
+            BarcodeSystem::Ean8 => 68,
+            BarcodeSystem::Code39 => 69,
+            BarcodeSystem::Itf => 70,
+            BarcodeSystem::Codabar => 71,
+            BarcodeSystem::Code93 => 72,
+            BarcodeSystem::Code128 => 73,
+        };
+
+        // ESC/POS Code 128 requires an initial Code Set selector (e.g., {B for Code Set B).
+        // If not present in the user payload, auto-prefix {B for standard alphanumeric ASCII.
+        let (prefix, payload_bytes) = match data.system {
+            BarcodeSystem::Code128
+                if !payload.starts_with(b"{A")
+                    && !payload.starts_with(b"{B")
+                    && !payload.starts_with(b"{C") =>
+            {
+                (&b"{B"[..], payload)
+            }
+            _ => (&[][..], payload),
+        };
+
+        let total_len = prefix.len() + payload_bytes.len();
+        let len = u8::try_from(total_len).map_err(|_| {
+            PapermintError::InvalidCommand(format!(
+                "barcode data too long: {} bytes (max 255)",
+                total_len
+            ))
+        })?;
+
+        // Barcode height: GS h n (1–255)
+        let height = if data.height == 0 { 64 } else { data.height };
+        buf.extend_from_slice(&[GS, b'h', height]);
+
+        // Barcode module width: GS w n (2–6)
+        let width = data.width.clamp(2, 6);
+        buf.extend_from_slice(&[GS, b'w', width]);
+
+        buf.extend_from_slice(&[GS, b'k', system_code, len]);
+        buf.extend_from_slice(prefix);
+        buf.extend_from_slice(payload_bytes);
+        Ok(())
+    }
+
+    /// Encodes a 2D QR code using standard Epson 5-step sequence (`GS ( k ...`).
+    fn encode_qr(&self, data: &QrData, buf: &mut Vec<u8>) -> Result<()> {
+        let payload = data.data.as_bytes();
+        let payload_len = payload.len();
+
+        // Length header: payload + 3 header bytes (fn 49, 80, 48)
+        let store_len = payload_len.checked_add(3).ok_or_else(|| {
+            PapermintError::InvalidCommand("QR code payload too large".to_string())
+        })?;
+
+        let (p_l, p_h) = if store_len <= 0xFFFF {
+            let p_l = u8::try_from(store_len & 0xFF).unwrap_or(0);
+            let p_h = u8::try_from((store_len >> 8) & 0xFF).unwrap_or(0);
+            (p_l, p_h)
+        } else {
+            return Err(PapermintError::InvalidCommand(
+                "QR code data exceeds 65535 bytes".to_string(),
+            ));
+        };
+
+        // 1. Select QR Model (Function 165): GS ( k 4 0 49 65 n1 n2
+        let model = if data.model == 1 { 49 } else { 50 }; // 49 = Model 1, 50 = Model 2
+        buf.extend_from_slice(&[GS, b'(', b'k', 4, 0, 49, 65, model, 0]);
+
+        // 2. Set Module Size (Function 167): GS ( k 3 0 49 67 n
+        let cell_size = data.cell_size.clamp(1, 16);
+        buf.extend_from_slice(&[GS, b'(', b'k', 3, 0, 49, 67, cell_size]);
+
+        // 3. Set Error Correction (Function 169): GS ( k 3 0 49 69 n
+        let ec_code = match data.correction {
+            QrCorrectionLevel::L => 48,
+            QrCorrectionLevel::M => 49,
+            QrCorrectionLevel::Q => 50,
+            QrCorrectionLevel::H => 51,
+        };
+        buf.extend_from_slice(&[GS, b'(', b'k', 3, 0, 49, 69, ec_code]);
+
+        // 4. Store Data in Symbol Storage Area (Function 180): GS ( k pL pH 49 80 48 <data>
+        buf.extend_from_slice(&[GS, b'(', b'k', p_l, p_h, 49, 80, 48]);
+        buf.extend_from_slice(payload);
+
+        // 5. Print QR Symbol (Function 181): GS ( k 3 0 49 81 48
+        buf.extend_from_slice(&[GS, b'(', b'k', 3, 0, 49, 81, 48]);
+
+        Ok(())
+    }
+
+    /// Encodes a monochrome 1-bit-per-pixel raster bitmap image (`GS v 0`).
+    fn encode_image(&self, img: &ImageData, buf: &mut Vec<u8>) -> Result<()> {
+        if img.width == 0 || img.height == 0 {
+            return Ok(());
+        }
+
+        let width_bytes = img.width.div_ceil(8) as usize;
+        let expected_len = width_bytes.checked_mul(img.height as usize).ok_or_else(|| {
+            PapermintError::InvalidCommand("image dimensions cause integer overflow".to_string())
+        })?;
+
+        if img.pixels.len() < expected_len {
+            return Err(PapermintError::InvalidCommand(format!(
+                "image pixel buffer length ({}) is less than expected ({}) for {}x{}",
+                img.pixels.len(),
+                expected_len,
+                img.width,
+                img.height
+            )));
+        }
+
+        // GS v 0 m xL xH yL yH d1..dk
+        // m: 0 = normal mode
+        let x_l = (width_bytes & 0xFF) as u8;
+        let x_h = ((width_bytes >> 8) & 0xFF) as u8;
+        let y_l = (img.height & 0xFF) as u8;
+        let y_h = ((img.height >> 8) & 0xFF) as u8;
+
+        buf.extend_from_slice(&[GS, b'v', b'0', 0, x_l, x_h, y_l, y_h]);
+        buf.extend_from_slice(&img.pixels[..expected_len]);
+
+        Ok(())
+    }
+}
+
+impl Dialect for EscPos {
+    fn name(&self) -> &'static str {
+        "ESC/POS"
+    }
+
+    fn encode(&self, command: &Command, buf: &mut Vec<u8>) -> Result<()> {
+        match command {
+            Command::Init => {
+                // Reset character size mask
+                self.char_size_mask.store(0, Ordering::Relaxed);
+                // ESC @: Initialize printer
+                buf.extend_from_slice(&[ESC, b'@']);
+            }
+
+            Command::Text(text) => {
+                buf.extend_from_slice(text.as_bytes());
+            }
+
+            Command::Feed(lines) => match *lines {
+                0 => {}
+                1 => buf.push(LF),
+                n => buf.extend_from_slice(&[ESC, b'd', n]),
+            },
+
+            Command::Cut(mode) => {
+                let cut_code = match mode {
+                    CutMode::Full => 0x00,
+                    CutMode::Partial => 0x01,
+                };
+                // GS V m
+                buf.extend_from_slice(&[GS, b'V', cut_code]);
+            }
+
+            Command::Align(alignment) => {
+                let code = match alignment {
+                    Alignment::Left => 0,
+                    Alignment::Center => 1,
+                    Alignment::Right => 2,
+                };
+                // ESC a n
+                buf.extend_from_slice(&[ESC, b'a', code]);
+            }
+
+            Command::Bold(enable) => {
+                // ESC E n
+                buf.extend_from_slice(&[ESC, b'E', u8::from(*enable)]);
+            }
+
+            Command::Underline(mode) => {
+                let code = match mode {
+                    UnderlineMode::Off => 0,
+                    UnderlineMode::Single => 1,
+                    UnderlineMode::Double => 2,
+                };
+                // ESC - n
+                buf.extend_from_slice(&[ESC, b'-', code]);
+            }
+
+            Command::Invert(enable) => {
+                // GS B n
+                buf.extend_from_slice(&[GS, b'B', u8::from(*enable)]);
+            }
+
+            Command::DoubleHeight(enable) => {
+                let current = self.char_size_mask.load(Ordering::Relaxed);
+                let updated = if *enable {
+                    current | 0x01 // 2x vertical
+                } else {
+                    current & !0x01
+                };
+                self.char_size_mask.store(updated, Ordering::Relaxed);
+                // GS ! n
+                buf.extend_from_slice(&[GS, b'!', updated]);
+            }
+
+            Command::DoubleWidth(enable) => {
+                let current = self.char_size_mask.load(Ordering::Relaxed);
+                let updated = if *enable {
+                    current | 0x10 // 2x horizontal
+                } else {
+                    current & !0x10
+                };
+                self.char_size_mask.store(updated, Ordering::Relaxed);
+                // GS ! n
+                buf.extend_from_slice(&[GS, b'!', updated]);
+            }
+
+            Command::Font(family) => {
+                let code = match family {
+                    FontFamily::A => 0,
+                    FontFamily::B => 1,
+                };
+                // ESC M n
+                buf.extend_from_slice(&[ESC, b'M', code]);
+            }
+
+            Command::DrawerKick(pin) => {
+                let m = match pin {
+                    DrawerPin::Pin2 => 0,
+                    DrawerPin::Pin5 => 1,
+                };
+                // ESC p m t1 t2 (pulse on 50ms, pulse off 500ms)
+                buf.extend_from_slice(&[ESC, b'p', m, 25, 250]);
+            }
+
+            Command::Beep { count, duration } => {
+                // ESC B n t
+                let n = (*count).clamp(1, 9);
+                let t = (*duration).clamp(1, 9);
+                buf.extend_from_slice(&[ESC, b'B', n, t]);
+            }
+
+            Command::LineSpacing(spacing) => match spacing {
+                None => buf.extend_from_slice(&[ESC, b'2']),
+                Some(dots) => buf.extend_from_slice(&[ESC, b'3', *dots]),
+            },
+
+            Command::UpsideDown(enable) => {
+                // ESC { n
+                buf.extend_from_slice(&[ESC, b'{', u8::from(*enable)]);
+            }
+
+            Command::CodePage(page) => {
+                let code = match page {
+                    CodePage::Pc437 => 0,
+                    CodePage::Katakana => 1,
+                    CodePage::Pc850 => 2,
+                    CodePage::Pc860 => 3,
+                    CodePage::Pc863 => 4,
+                    CodePage::Pc865 => 5,
+                    CodePage::Wpc1252 => 16,
+                    CodePage::Pc866 => 17,
+                    CodePage::Pc852 => 18,
+                    CodePage::Pc858 => 19,
+                    CodePage::Pc720 => 32,
+                    CodePage::Pc864 => 37,
+                    CodePage::Pc737 => 14,
+                    CodePage::Wpc1250 => 45,
+                    CodePage::Wpc1251 => 46,
+                    CodePage::Wpc1253 => 47,
+                    CodePage::Wpc1254 => 48,
+                    CodePage::Wpc1255 => 49,
+                    CodePage::Wpc1256 => 50,
+                    CodePage::Wpc1257 => 51,
+                    CodePage::Wpc1258 => 52,
+                    CodePage::Custom(n) => *n,
+                };
+                // ESC t n
+                buf.extend_from_slice(&[ESC, b't', code]);
+            }
+
+            Command::Barcode(data) => self.encode_barcode(data, buf)?,
+
+            Command::QrCode(data) => self.encode_qr(data, buf)?,
+
+            Command::Image(img) => self.encode_image(img, buf)?,
+
+            Command::Raw(raw_bytes) => {
+                buf.extend_from_slice(raw_bytes);
+            }
+        }
+
+        Ok(())
+    }
+}
