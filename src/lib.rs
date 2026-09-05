@@ -22,4 +22,7 @@ pub use error::PapermintError;
 #[cfg(feature = "escpos")]
 pub use dialect::escpos::EscPos;
 
+#[cfg(feature = "star")]
+pub use dialect::star::Star;
+
 pub use transport::vec_sink::VecSink;

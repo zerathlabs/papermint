@@ -9,12 +9,15 @@ use crate::error::Result;
 #[cfg(feature = "escpos")]
 pub mod escpos;
 
+#[cfg(feature = "star")]
+pub mod star;
+
 /// Trait implemented by printer command set encoders.
 ///
 /// Implementors convert high-level [`Command`] IR variants into binary wire bytes,
 /// appending them into a provided mutable buffer to minimize heap allocations.
 pub trait Dialect: Send + Sync {
-    /// Returns the human-readable name of this dialect (e.g., "ESC/POS").
+    /// Returns the human-readable name of this dialect (e.g., "ESC/POS", "StarPRNT").
     fn name(&self) -> &'static str;
 
     /// Encodes a single [`Command`] into the output buffer.
