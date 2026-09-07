@@ -1,7 +1,7 @@
 //! Printer communication transports.
 //!
 //! A [`Transport`] is responsible for delivering raw byte buffers to the
-//! physical or virtual printer destination.
+//! physical or virtual printer destination (TCP network, memory buffer, etc.).
 
 use crate::error::Result;
 
@@ -10,6 +10,9 @@ use async_trait::async_trait;
 
 #[cfg(feature = "async")]
 pub mod vec_sink;
+
+#[cfg(feature = "tcp")]
+pub mod tcp;
 
 /// Asynchronous transport interface for printer communication.
 #[cfg(feature = "async")]

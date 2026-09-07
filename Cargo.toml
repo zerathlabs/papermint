@@ -8,11 +8,13 @@ keywords = ["thermal", "escpos", "pos", "receipt", "printer"]
 categories = ["hardware-support", "embedded"]
 
 [features]
-default = ["std", "escpos", "star", "async"]
+default = ["std", "escpos", "star", "async", "tcp"]
 std = []
 async = ["dep:tokio", "dep:async-trait"]
 escpos = []
 star = []
+tcp = ["async"]
+image = []
 
 [dependencies]
 thiserror = "2"

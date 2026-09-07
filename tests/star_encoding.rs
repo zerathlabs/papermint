@@ -1,6 +1,6 @@
 use papermint::{
     Alignment, BarcodeData, BarcodeSystem, CodePage, Command, CutMode, DrawerPin, Encoder,
-    ImageData, QrCorrectionLevel, QrData,
+    ImageData, PaperWidth, Printer, QrCorrectionLevel, QrData, Receipt,
 };
 
 #[test]
@@ -134,4 +134,36 @@ fn test_star_qr_code() {
     assert!(bytes.windows(6).any(|w| w == [0x1B, 0x1D, b'y', b'S', b'2', 4]));
     // 4. Print: ESC GS y P
     assert!(bytes.windows(4).any(|w| w == [0x1B, 0x1D, b'y', b'P']));
+}
+
+#[tokio::test]
+async fn test_star_printer_mock_and_receipt_reuse() {
+    let mut printer = Printer::star_mock();
+
+    // Build the receipt ONCE — exact same receipt works on both Epson and Star!
+    let receipt = Receipt::new(PaperWidth::Mm80)
+        .init()
+        .center()
+        .bold(true)
+        .text_ln("STAR MICRONICS TEST")
+        .bold(false)
+        .left()
+        .two_column("Item A", "10.00")
+        .cut_partial();
+
+    printer.print(&receipt).await.expect("Star print should succeed");
+
+    let bytes = printer.transport().bytes();
+    assert!(!bytes.is_empty());
+
+    // Verify Star init bytes ESC @
+    assert_eq!(&bytes[0..2], &[0x1B, 0x40]);
+
+    // Verify text
+    let output = String::from_utf8_lossy(&bytes);
+    assert!(output.contains("STAR MICRONICS TEST"));
+    assert!(output.contains("Item A"));
+
+    // Verify Star partial cut ESC d 3
+    assert!(bytes.windows(3).any(|w| w == [0x1B, b'd', 3]));
 }
