@@ -1,5 +1,6 @@
 //! Fluent builder for composing printable receipts.
 
+use crate::charset::InternationalCharset;
 use crate::codepage::CodePage;
 use crate::command::{
     Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
@@ -421,6 +422,64 @@ impl Receipt {
     pub fn code_page(mut self, page: impl Into<CodePage>) -> Self {
         self.commands.push(Command::CodePage(page.into()));
         self
+    }
+
+    /// Selects an international character set (e.g. [`InternationalCharset::Uk`], [`InternationalCharset::France`]).
+    ///
+    /// Modifies 12 standard ASCII punctuation positions (`#`, `$`, `@`, `[`, `\`, `]`, `^`, `` ` ``, `{`, `|`, `}`, `~`)
+    /// to provide localized national currency and accented character symbols.
+    #[must_use]
+    pub fn international_charset(mut self, charset: impl Into<InternationalCharset>) -> Self {
+        self.commands.push(Command::InternationalCharset(charset.into()));
+        self
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::Usa)`.
+    #[must_use]
+    pub fn charset_usa(self) -> Self {
+        self.international_charset(InternationalCharset::Usa)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::Uk)`.
+    #[must_use]
+    pub fn charset_uk(self) -> Self {
+        self.international_charset(InternationalCharset::Uk)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::France)`.
+    #[must_use]
+    pub fn charset_france(self) -> Self {
+        self.international_charset(InternationalCharset::France)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::Germany)`.
+    #[must_use]
+    pub fn charset_germany(self) -> Self {
+        self.international_charset(InternationalCharset::Germany)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::SpainI)`.
+    #[must_use]
+    pub fn charset_spain(self) -> Self {
+        self.international_charset(InternationalCharset::SpainI)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::Italy)`.
+    #[must_use]
+    pub fn charset_italy(self) -> Self {
+        self.international_charset(InternationalCharset::Italy)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::Japan)`.
+    #[must_use]
+    pub fn charset_japan(self) -> Self {
+        self.international_charset(InternationalCharset::Japan)
+    }
+
+    /// Convenience for `.international_charset(InternationalCharset::Arabia)`.
+    #[must_use]
+    pub fn charset_arabia(self) -> Self {
+        self.international_charset(InternationalCharset::Arabia)
     }
 
     /// Appends raw bytes directly to the printer command stream.

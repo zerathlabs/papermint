@@ -235,6 +235,26 @@ if status.drawer == DrawerStatus::Open {
 }
 ```
 
+### 6. International Character Sets & Extended Code Pages
+
+Thermal receipt printers are 8-bit devices that cannot natively parse multi-byte UTF-8 without garbled output. `papermint` provides automatic single-byte transcoding and standard `ESC R n` national character set switching:
+
+```rust
+use papermint::{Receipt, PaperWidth, CodePage, InternationalCharset};
+
+let receipt = Receipt::new(PaperWidth::Mm80)
+    .init()
+    // Select national currency/symbol set (e.g. UK replaces '#' with '£'):
+    .charset_uk()
+    // Select 8-bit extended code table (e.g. Windows-1252 for Western Europe):
+    .code_page(CodePage::Wpc1252)
+    .text_ln("Fish & Chips: £12.50")
+    // Euro (€) is automatically transcoded to 0x80 (no UTF-8 mojibake!):
+    .two_column("Crêpe Nutella", "4.50 €")
+    .feed(2)
+    .cut_full();
+```
+
 ---
 
 ## Documentation & Guides

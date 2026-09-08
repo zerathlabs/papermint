@@ -1,6 +1,7 @@
 //! Star Micronics (StarPRNT / Line Mode) dialect implementation.
 
 use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::RwLock;
 
 use crate::codepage::CodePage;
 use crate::command::{
@@ -21,12 +22,20 @@ const LF: u8 = 0x0A;
 ///
 /// Translates abstract [`Command`] variants into Star Micronics command codes
 /// supported by the TSP100, TSP650, TSP700, and mC-Print series.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct Star {
     /// Character height multiplier (0 = 1x, 1 = 2x).
     char_height: AtomicU8,
     /// Character width multiplier (0 = 1x, 1 = 2x).
     char_width: AtomicU8,
+    /// Active code page for transcoding Unicode characters into 8-bit wire bytes.
+    active_codepage: RwLock<CodePage>,
+}
+
+impl Default for Star {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Star {
@@ -36,6 +45,7 @@ impl Star {
         Self {
             char_height: AtomicU8::new(0),
             char_width: AtomicU8::new(0),
+            active_codepage: RwLock::new(CodePage::Pc437),
         }
     }
 
@@ -197,12 +207,25 @@ impl Dialect for Star {
             Command::Init => {
                 self.char_height.store(0, Ordering::Relaxed);
                 self.char_width.store(0, Ordering::Relaxed);
+                if let Ok(mut cp) = self.active_codepage.write() {
+                    *cp = CodePage::Pc437;
+                }
                 // ESC @: Initialize printer
                 buf.extend_from_slice(&[ESC, b'@']);
             }
 
             Command::Text(text) => {
-                buf.extend_from_slice(text.as_bytes());
+                if text.is_ascii() {
+                    buf.extend_from_slice(text.as_bytes());
+                } else {
+                    let cp = self
+                        .active_codepage
+                        .read()
+                        .map(|c| *c)
+                        .unwrap_or(CodePage::Pc437);
+                    let encoded = cp.encode_text(text);
+                    buf.extend_from_slice(&encoded);
+                }
             }
 
             Command::Feed(lines) => match *lines {
@@ -312,6 +335,9 @@ impl Dialect for Star {
             }
 
             Command::CodePage(page) => {
+                if let Ok(mut cp) = self.active_codepage.write() {
+                    *cp = *page;
+                }
                 let code = match page {
                     CodePage::Pc437 => 1,
                     CodePage::Katakana => 2,
@@ -334,10 +360,18 @@ impl Dialect for Star {
                     CodePage::Wpc1256 => 72,
                     CodePage::Wpc1257 => 19,
                     CodePage::Wpc1258 => 22,
+                    CodePage::Pc857 => 69,
+                    CodePage::Iso8859_15 => 40,
+                    CodePage::Pc874 => 22,
                     CodePage::Custom(n) => *n,
                 };
                 // ESC GS t n: Select character code table
                 buf.extend_from_slice(&[ESC, GS, b't', code]);
+            }
+
+            Command::InternationalCharset(charset) => {
+                // ESC R n: Select international character set
+                buf.extend_from_slice(&[ESC, b'R', charset.code()]);
             }
 
             Command::Barcode(data) => self.encode_barcode(data, buf)?,

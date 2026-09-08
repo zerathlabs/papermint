@@ -203,6 +203,7 @@ Star Micronics printers (TSP100, TSP650, TSP700, mC-Print series) use the Star L
 | **Line Spacing** | `ESC 2` (default) / `ESC 3 n` | `ESC z 1` (default) / `ESC 3 n` | Vertical line pitch in dots |
 | **Upside-Down** | `ESC { 1/0` (`[0x1B, 0x7B, 1/0]`) | `SI` (`0x0F`) / `DC2` (`0x12`) | 180° rotation for kitchen rails |
 | **Code Page** | `ESC t n` (`[0x1B, 0x74, n]`) | `ESC GS t n` (`[0x1B, 0x1D, 0x74, n]`) | Select character code table |
+| **International Charset** | `ESC R n` (`[0x1B, 0x52, n]`) | `ESC R n` (`[0x1B, 0x52, n]`) | Select country currency and punctuation glyphs |
 | **1D Barcode** | `GS k m n d1..dk` (`m=65..73`, auto `{B`) | `ESC b n1 n2 n3 n4 d1..dk RS` (`n1=0..8`) | 0-indexed symbologies in Star |
 | **QR Code** | `GS ( k ...` (Function 165–181) | `ESC GS y S ...` | 5-step hardware QR sequence |
 | **Raster Image** | `GS v 0 0 xL xH yL yH <data>` | `ESC * r A` / `ESC * r b ...` / `ESC * r B` | Native 1-bit monochrome raster |
@@ -242,5 +243,59 @@ Executing `DLE EOT 1..4` (`0x10 0x04 0x01` through `0x10 0x04 0x04`) returns a 4
   - Bit 5: Cover open (`1`: Open)
   - Bit 6: Paper empty (`1`: Empty)
 - **Auto Status Back (ASB)**: Star printers transmit a 3-to-4 byte frame reporting cover, drawer, near-end detector, cutter jam, and head overheat.
+
+---
+
+## 9. International Character Sets & Code Page Transcoding
+
+### 9.1 Single-Byte Character Architecture
+Thermal receipt printers operate strictly as **8-bit character devices**:
+- Code points `0x00`–`0x7F` (0–127): Standard 7-bit ASCII.
+- Code points `0x80`–`0xFF` (128–255): Mapped to a selectable character code table (Code Page).
+
+> **Common Pitfall**: Modern software uses multi-byte UTF-8. For example, Euro (`€`) is 3 bytes in UTF-8 (`0xE2 0x82 0xAC`). If these 3 bytes are written directly to a thermal printer, the printer interprets each byte as an independent character in its active code page, printing `â,¼` (mojibake).  
+> `papermint` includes a zero-dependency **8-bit transcoding engine** that dynamically maps Unicode characters to the physical 8-bit wire byte of the active code page (e.g. `€` ➡️ `0x80` in Windows-1252, or `0xD5` in PC858).
+
+### 9.2 `ESC R n` (Select International Character Set)
+
+Both Epson ESC/POS and StarPRNT Line Mode share the `ESC R n` (`0x1B 0x52 n`) command to replace 12 ASCII punctuation symbols (`#`, `$`, `@`, `[`, `\`, `]`, `^`, `` ` ``, `{`, `|`, `}`, `~`) with localized currency and accented letters:
+
+| `n` | Country Set | Key Symbol Substitutions |
+| :---: | :--- | :--- |
+| `0` | **USA** | Standard ASCII (`#`, `$`, `@`, `[`, `\`, `]`, `^`, `` ` ``, `{`, `|`, `}`, `~`) |
+| `1` | **France** | `$` ➡️ `£`, `@` ➡️ `à`, `[` ➡️ `°`, `\` ➡️ `ç`, `]` ➡️ `§`, `{` ➡️ `é`, `\|` ➡️ `ù`, `}` ➡️ `è` |
+| `2` | **Germany** | `@` ➡️ `§`, `[` ➡️ `Ä`, `\` ➡️ `Ö`, `]` ➡️ `Ü`, `{` ➡️ `ä`, `\|` ➡️ `ö`, `}` ➡️ `ü`, `~` ➡️ `ß` |
+| `3` | **UK** | `#` ➡️ `£` (Pound sterling) |
+| `4` | **Denmark I** | `[` ➡️ `Æ`, `\` ➡️ `Ø`, `]` ➡️ `Å`, `{` ➡️ `æ`, `\|` ➡️ `ø`, `}` ➡️ `å` |
+| `5` | **Sweden** | `@` ➡️ `É`, `[` ➡️ `Ä`, `\` ➡️ `Ö`, `]` ➡️ `Å`, `^` ➡️ `Ü`, `{` ➡️ `ä`, `\|` ➡️ `ö`, `}` ➡️ `å`, `~` ➡️ `ü` |
+| `6` | **Italy** | `@` ➡️ `§`, `[` ➡️ `°`, `\` ➡️ `ç`, `]` ➡️ `é`, `{` ➡️ `ù`, `\|` ➡️ `à`, `}` ➡️ `ò`, `~` ➡️ `è` |
+| `7` | **Spain I** | `$` ➡️ `Pt`, `[` ➡️ `¡`, `\` ➡️ `Ñ`, `]` ➡️ `¿`, `{` ➡️ `¨`, `}` ➡️ `ñ` |
+| `8` | **Japan** | `\` ➡️ `¥` (Yen) |
+| `17` | **Arabia** | Arabic currency & punctuation set |
+
+### 9.3 Code Page Wire Mappings (`ESC t n` vs `ESC GS t n`)
+
+| Code Page | Description | Epson ESC/POS (`ESC t n`) | StarPRNT (`ESC GS t n`) |
+| :--- | :--- | :---: | :---: |
+| **`Pc437`** | Standard OEM / USA | `0` | `1` |
+| **`Katakana`** | Japanese Katakana | `1` | `2` |
+| **`Pc850`** | Multilingual Latin I | `2` | `0` |
+| **`Pc860`** | Portuguese | `3` | `6` |
+| **`Pc863`** | Canadian-French | `4` | `8` |
+| **`Pc865`** | Nordic | `5` | `9` |
+| **`Wpc1252`** | Windows Latin I (with Euro `0x80`) | `16` | `32` |
+| **`Pc866`** | Cyrillic #2 (Russian) | `17` | `10` |
+| **`Pc852`** | Latin II (Slavic / Eastern Europe) | `18` | `5` |
+| **`Pc858`** | Multilingual Latin I + Euro (`0xD5`) | `19` | `4` |
+| **`Pc720`** | Arabic (DOS) | `32` | `72` |
+| **`Pc864`** | Arabic (Simplified) | `37` | `14` |
+| **`Wpc1256`** | Windows Arabic | `50` | `72` |
+| **`Wpc1250`** | Windows Central European | `45` | `33` |
+| **`Wpc1251`** | Windows Cyrillic | `46` | `34` |
+| **`Wpc1255`** | Windows Hebrew | `49` | `13` |
+| **`Pc857`** | Turkish | `13` | `69` |
+| **`Iso8859_15`** | Latin 9 (with Euro `0xA4`) | `40` | `40` |
+| **`Pc874`** | Thai | `20` | `22` |
+
 
 

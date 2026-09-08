@@ -1,6 +1,7 @@
 //! Standard Epson ESC/POS dialect implementation.
 
 use std::sync::atomic::{AtomicU8, Ordering};
+use std::sync::RwLock;
 
 use crate::codepage::CodePage;
 use crate::command::{
@@ -21,12 +22,20 @@ const LF:  u8 = 0x0A; // 10 in decimal (Newline '\n')
 /// Converts abstract [`Command`] variants into standard ESC/POS byte sequences.
 /// State like character dimensions (double width/height) is maintained atomically
 /// so that [`Dialect::encode`] can remain concurrent and thread-safe.
-#[derive(Debug, Default)]
+#[derive(Debug)]
 pub struct EscPos {
     /// Bitmask for character dimensions via `GS ! n`:
     /// - bits 0–3: height multiplier (0 = 1x, 1 = 2x)
     /// - bits 4–7: width multiplier (0 = 1x, 1 = 2x)
     char_size_mask: AtomicU8,
+    /// Active code page for transcoding Unicode characters into 8-bit wire bytes.
+    active_codepage: RwLock<CodePage>,
+}
+
+impl Default for EscPos {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl EscPos {
@@ -35,6 +44,7 @@ impl EscPos {
     pub fn new() -> Self {
         Self {
             char_size_mask: AtomicU8::new(0),
+            active_codepage: RwLock::new(CodePage::Pc437),
         }
     }
 
@@ -183,12 +193,25 @@ impl Dialect for EscPos {
             Command::Init => {
                 // Reset character size mask
                 self.char_size_mask.store(0, Ordering::Relaxed);
+                if let Ok(mut cp) = self.active_codepage.write() {
+                    *cp = CodePage::Pc437;
+                }
                 // ESC @: Initialize printer
                 buf.extend_from_slice(&[ESC, b'@']);
             }
 
             Command::Text(text) => {
-                buf.extend_from_slice(text.as_bytes());
+                if text.is_ascii() {
+                    buf.extend_from_slice(text.as_bytes());
+                } else {
+                    let cp = self
+                        .active_codepage
+                        .read()
+                        .map(|c| *c)
+                        .unwrap_or(CodePage::Pc437);
+                    let encoded = cp.encode_text(text);
+                    buf.extend_from_slice(&encoded);
+                }
             }
 
             Command::Feed(lines) => match *lines {
@@ -296,6 +319,9 @@ impl Dialect for EscPos {
             }
 
             Command::CodePage(page) => {
+                if let Ok(mut cp) = self.active_codepage.write() {
+                    *cp = *page;
+                }
                 let code = match page {
                     CodePage::Pc437 => 0,
                     CodePage::Katakana => 1,
@@ -318,10 +344,18 @@ impl Dialect for EscPos {
                     CodePage::Wpc1256 => 50,
                     CodePage::Wpc1257 => 51,
                     CodePage::Wpc1258 => 52,
+                    CodePage::Pc857 => 13,
+                    CodePage::Iso8859_15 => 40,
+                    CodePage::Pc874 => 20,
                     CodePage::Custom(n) => *n,
                 };
                 // ESC t n
                 buf.extend_from_slice(&[ESC, b't', code]);
+            }
+
+            Command::InternationalCharset(charset) => {
+                // ESC R n: Select an international character set
+                buf.extend_from_slice(&[ESC, b'R', charset.code()]);
             }
 
             Command::Barcode(data) => self.encode_barcode(data, buf)?,

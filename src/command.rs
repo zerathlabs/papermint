@@ -8,6 +8,7 @@
 // A Vec<Command> can be serialized, stored, replayed, or re-encoded for a
 // different printer vendor without touching the original receipt logic.
 
+use crate::charset::InternationalCharset;
 use crate::codepage::CodePage;
 
 /// Text alignment on the receipt paper.
@@ -175,6 +176,9 @@ pub enum Command {
 
     /// Select character code page table (e.g., [`CodePage::Wpc1252`], [`CodePage::Pc850`]).
     CodePage(CodePage),
+
+    /// Select international character set (e.g., [`InternationalCharset::Uk`], [`InternationalCharset::France`]).
+    InternationalCharset(InternationalCharset),
 
     /// Inject raw bytes directly (escape hatch for vendor-specific commands).
     Raw(Vec<u8>),

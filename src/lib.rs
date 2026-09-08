@@ -5,6 +5,7 @@
 //   Layer 2 (Encoder)   → Dialect trait translates Command → raw bytes
 //   Layer 1 (Transport) → Sends bytes to hardware (TCP, USB, Serial, etc.)
 
+pub mod charset;
 pub mod codepage;
 pub mod command;
 pub mod encoder;
@@ -23,6 +24,7 @@ pub mod printer;
 
 // ── Public re-exports for ergonomic top-level imports ──
 
+pub use charset::InternationalCharset;
 pub use codepage::CodePage;
 pub use command::*;
 pub use encoder::Encoder;
