@@ -53,7 +53,12 @@ impl TcpTransport {
         }
 
         let stream = match timeout(self.connect_timeout, TcpStream::connect(self.addr)).await {
-            Ok(Ok(stream)) => stream,
+            Ok(Ok(stream)) => {
+                // Disable Nagle's algorithm so short POS commands (drawer kicks, cuts, line feeds)
+                // are transmitted immediately without 40–200ms ACK coalescing latency.
+                let _ = stream.set_nodelay(true);
+                stream
+            }
             Ok(Err(e)) => return Err(PapermintError::Io(e)),
             Err(_) => {
                 return Err(PapermintError::Timeout(
