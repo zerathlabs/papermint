@@ -5,7 +5,9 @@ use crate::command::{
     Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
     QrCorrectionLevel, QrData, UnderlineMode,
 };
-use crate::layout::column::{format_three_column, format_two_column, PaperWidth};
+use crate::layout::column::{
+    format_table_row, format_three_column, format_two_column, PaperWidth, TableColumn,
+};
 
 /// A fluent receipt document builder that generates a [`Vec<Command>`].
 ///
@@ -230,6 +232,29 @@ impl Receipt {
         let cols = self.columns();
         let formatted = format_three_column(left.as_ref(), center.as_ref(), right.as_ref(), cols);
         self.text_ln(formatted)
+    }
+
+    /// Prints an N-column table row with automatic word-wrapping and synchronized vertical row height.
+    ///
+    /// Long cell text wraps within its allocated column width while preserving
+    /// strict columnar alignment across adjacent columns on the receipt.
+    #[must_use]
+    pub fn table_row<S: AsRef<str>>(mut self, cells: &[S], columns: &[TableColumn]) -> Self {
+        let str_cells: Vec<&str> = cells.iter().map(|s| s.as_ref()).collect();
+        let lines = format_table_row(&str_cells, columns, self.columns());
+        for line in lines {
+            self = self.text_ln(line);
+        }
+        self
+    }
+
+    /// Prints multiple N-column table rows.
+    #[must_use]
+    pub fn table<S: AsRef<str>>(mut self, columns: &[TableColumn], rows: &[&[S]]) -> Self {
+        for row in rows {
+            self = self.table_row(row, columns);
+        }
+        self
     }
 
     /// Prints a barcode with full custom parameters.

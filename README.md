@@ -153,7 +153,35 @@ async fn test_my_receipt() {
 | `tcp` | **Yes** | Tokio async TCP transport (`TcpTransport`) |
 | `image` | No | PNG/JPEG decoding, aspect-ratio auto-scaling, and Floyd-Steinberg dithering |
 
-### 3. Image Printing & Floyd-Steinberg Dithering
+### 3. Multi-Column Tables with Word-Wrapping
+
+Print tabular receipts where long item names automatically wrap at word boundaries without breaking columnar alignment:
+
+```rust
+use papermint::{Alignment, PaperWidth, Receipt, TableColumn};
+
+let columns = [
+    TableColumn::fixed(4, Alignment::Left),          // Qty
+    TableColumn::fraction(0.50, Alignment::Left),   // Description
+    TableColumn::fraction(0.20, Alignment::Right),  // Unit Price
+    TableColumn::fraction(0.25, Alignment::Right),  // Total Price
+];
+
+let receipt = Receipt::new(PaperWidth::Mm80)
+    .init()
+    .table_row(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns)
+    .divider('-')
+    .table_row(
+        &["2x", "Double Truffle Wagyu Smash Burger with Caramelized Onions", "$12.50", "$25.00"],
+        &columns,
+    )
+    .table_row(&["1x", "Large Truffle Fries", "$5.50", "$5.50"], &columns)
+    .divider('=')
+    .two_column("TOTAL", "$30.50")
+    .cut_full();
+```
+
+### 4. Image Printing & Floyd-Steinberg Dithering
 
 Enable the `image` feature to print logos, graphics, and coupons directly from PNG or JPEG files:
 

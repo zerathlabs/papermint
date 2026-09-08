@@ -69,3 +69,43 @@ fn test_paper_widths() {
     let r_custom = Receipt::new(PaperWidth::Custom(42));
     assert_eq!(r_custom.columns(), 42);
 }
+
+#[test]
+fn test_receipt_table_row_and_word_wrapping() {
+    use papermint::{Alignment, Command, TableColumn};
+
+    let columns = [
+        TableColumn::fixed(4, Alignment::Left),
+        TableColumn::fraction(0.50, Alignment::Left),
+        TableColumn::fraction(0.25, Alignment::Right),
+        TableColumn::fraction(0.25, Alignment::Right),
+    ];
+
+    let receipt = Receipt::new(PaperWidth::Mm80)
+        .init()
+        .table_row(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns)
+        .divider('-')
+        .table_row(
+            &["2x", "Double Truffle Wagyu Smash Burger with Caramelized Onions", "$12.00", "$24.00"],
+            &columns,
+        )
+        .table_row(&["1x", "Mint Cooler", "$3.50", "$3.50"], &columns);
+
+    let cmds = receipt.commands();
+    // Multi-line item wrapping should generate multiple Text commands
+    assert!(cmds.len() >= 5);
+
+    let mut all_text = String::new();
+    for cmd in cmds {
+        if let Command::Text(s) = cmd {
+            all_text.push_str(s);
+        }
+    }
+
+    assert!(all_text.contains("Double Truffle"));
+    assert!(all_text.contains("Smash Burger with"));
+    assert!(all_text.contains("Caramelized Onions"));
+    assert!(all_text.contains("$24.00"));
+    assert!(all_text.contains("Mint Cooler"));
+}
+
