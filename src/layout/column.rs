@@ -1,6 +1,32 @@
 //! Column layout and paper width calculation utilities.
 
+use unicode_width::{UnicodeWidthChar, UnicodeWidthStr};
+
 use crate::command::Alignment;
+
+/// Returns the printable monospace display width of a string in accordance with
+/// Unicode Standard Annex #11 (East Asian Width).
+///
+/// Fullwidth CJK ideographs, Hangul, Kana, and fullwidth symbols return width 2,
+/// standard ASCII/Latin characters return width 1, and zero-width/combining characters return width 0.
+#[must_use]
+pub fn str_display_width(s: &str) -> usize {
+    UnicodeWidthStr::width(s)
+}
+
+/// Truncates a string slice so its monospace display width does not exceed `max_width`.
+#[must_use]
+pub fn truncate_to_display_width(s: &str, max_width: usize) -> &str {
+    let mut current_width = 0;
+    for (byte_idx, ch) in s.char_indices() {
+        let ch_w = UnicodeWidthChar::width(ch).unwrap_or(0);
+        if current_width + ch_w > max_width {
+            return &s[..byte_idx];
+        }
+        current_width += ch_w;
+    }
+    s
+}
 
 /// Thermal printer paper width and character capacity.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -46,27 +72,27 @@ impl PaperWidth {
 /// text is truncated with an ellipsis or wrapped.
 #[must_use]
 pub fn format_two_column(left: &str, right: &str, total_width: usize) -> String {
-    let left_count = left.chars().count();
-    let right_count = right.chars().count();
+    let left_count = str_display_width(left);
+    let right_count = str_display_width(right);
 
     if left_count + right_count < total_width {
         let spaces = total_width - (left_count + right_count);
         format!("{left}{}{right}", " ".repeat(spaces))
     } else if right_count >= total_width {
         // Right side is too large to fit anything else
-        right.chars().take(total_width).collect()
+        truncate_to_display_width(right, total_width).to_string()
     } else {
         // Truncate left with an ellipsis
         let max_left = total_width.saturating_sub(right_count + 1);
         let left_truncated: String = if max_left > 1 {
-            let take_len = max_left - 1;
-            let mut s: String = left.chars().take(take_len).collect();
+            let take_w = max_left - 1;
+            let mut s = truncate_to_display_width(left, take_w).to_string();
             s.push('…');
             s
         } else {
-            left.chars().take(max_left).collect()
+            truncate_to_display_width(left, max_left).to_string()
         };
-        let spaces = total_width.saturating_sub(left_truncated.chars().count() + right_count);
+        let spaces = total_width.saturating_sub(str_display_width(&left_truncated) + right_count);
         format!("{left_truncated}{}{right}", " ".repeat(spaces))
     }
 }
@@ -79,9 +105,9 @@ pub fn format_three_column(
     right: &str,
     total_width: usize,
 ) -> String {
-    let left_count = left.chars().count();
-    let center_count = center.chars().count();
-    let right_count = right.chars().count();
+    let left_count = str_display_width(left);
+    let center_count = str_display_width(center);
+    let right_count = str_display_width(right);
 
     let text_len = left_count + center_count + right_count;
     if text_len + 2 <= total_width {
@@ -207,12 +233,14 @@ pub fn resolve_column_widths(columns: &[TableColumn], total_width: usize) -> Vec
     let remaining = total_width - fixed_sum;
     let mut allocated_frac = 0;
 
-    for (i, col) in columns.iter().enumerate() {
-        if let ColumnWidth::Fraction(f) = col.width {
-            let norm_f = if total_frac > 1.0 { f / total_frac } else { f };
-            let w = ((remaining as f32) * norm_f).round() as usize;
-            widths[i] = w;
-            allocated_frac += w;
+    if total_frac > 0.0 {
+        for (i, col) in columns.iter().enumerate() {
+            if let ColumnWidth::Fraction(f) = col.width {
+                let norm_f = f / total_frac;
+                let w = ((remaining as f32) * norm_f).round() as usize;
+                widths[i] = w;
+                allocated_frac += w;
+            }
         }
     }
 
@@ -240,9 +268,9 @@ pub fn resolve_column_widths(columns: &[TableColumn], total_width: usize) -> Vec
     widths
 }
 
-/// Wraps text into multiple lines respecting word boundaries and `max_width`.
+/// Wraps text into multiple lines respecting word boundaries, display width, and explicit line breaks (`\n`).
 ///
-/// If a single unbroken word exceeds `max_width`, it will be broken at character boundaries.
+/// If a single unbroken word exceeds `max_width`, it will be broken cleanly across lines.
 #[must_use]
 pub fn wrap_text_to_width(text: &str, max_width: usize) -> Vec<String> {
     if max_width == 0 {
@@ -255,51 +283,63 @@ pub fn wrap_text_to_width(text: &str, max_width: usize) -> Vec<String> {
     }
 
     let mut lines = Vec::new();
-    let mut current_line = String::new();
-    let mut current_len = 0;
 
-    for word in trimmed.split_whitespace() {
-        let word_len = word.chars().count();
-
-        // If a single word exceeds max_width, break it into chunks
-        if word_len > max_width {
-            if !current_line.is_empty() {
-                lines.push(std::mem::take(&mut current_line));
-                current_len = 0;
-            }
-
-            let mut word_chars = word.chars();
-            loop {
-                let chunk: String = word_chars.by_ref().take(max_width).collect();
-                if chunk.is_empty() {
-                    break;
-                }
-                if chunk.chars().count() == max_width {
-                    lines.push(chunk);
-                } else {
-                    current_line = chunk;
-                    current_len = current_line.chars().count();
-                }
-            }
+    // Preserve explicit newline breaks (\n) within cell text
+    for raw_line in text.split('\n') {
+        let line_trimmed = raw_line.trim();
+        if line_trimmed.is_empty() {
+            lines.push(String::new());
             continue;
         }
 
-        if current_line.is_empty() {
-            current_line.push_str(word);
-            current_len = word_len;
-        } else if current_len + 1 + word_len <= max_width {
-            current_line.push(' ');
-            current_line.push_str(word);
-            current_len += 1 + word_len;
-        } else {
-            lines.push(std::mem::take(&mut current_line));
-            current_line.push_str(word);
-            current_len = word_len;
-        }
-    }
+        let mut current_line = String::new();
+        let mut current_len = 0;
 
-    if !current_line.is_empty() {
-        lines.push(current_line);
+        for word in line_trimmed.split_whitespace() {
+            let word_len = str_display_width(word);
+
+            // If a single word exceeds max_width, break it into display-width chunks
+            if word_len > max_width {
+                if !current_line.is_empty() {
+                    lines.push(std::mem::take(&mut current_line));
+                    current_len = 0;
+                }
+
+                let mut remaining_word = word;
+                while !remaining_word.is_empty() {
+                    let chunk = truncate_to_display_width(remaining_word, max_width);
+                    let chunk_len = str_display_width(chunk);
+                    if chunk_len == 0 {
+                        break;
+                    }
+                    if chunk_len == max_width {
+                        lines.push(chunk.to_string());
+                    } else {
+                        current_line = chunk.to_string();
+                        current_len = chunk_len;
+                    }
+                    remaining_word = &remaining_word[chunk.len()..];
+                }
+                continue;
+            }
+
+            if current_line.is_empty() {
+                current_line.push_str(word);
+                current_len = word_len;
+            } else if current_len + 1 + word_len <= max_width {
+                current_line.push(' ');
+                current_line.push_str(word);
+                current_len += 1 + word_len;
+            } else {
+                lines.push(std::mem::take(&mut current_line));
+                current_line.push_str(word);
+                current_len = word_len;
+            }
+        }
+
+        if !current_line.is_empty() {
+            lines.push(current_line);
+        }
     }
 
     if lines.is_empty() {
@@ -344,12 +384,12 @@ pub fn format_table_row(cells: &[&str], columns: &[TableColumn], total_width: us
     result_lines
 }
 
-/// Aligns a text string within a given column width.
+/// Aligns a text string within a given column width using monospace display width.
 #[must_use]
 pub fn align_text(text: &str, width: usize, alignment: Alignment) -> String {
-    let count = text.chars().count();
+    let count = str_display_width(text);
     if count >= width {
-        return text.chars().take(width).collect();
+        return truncate_to_display_width(text, width).to_string();
     }
 
     let diff = width - count;
@@ -434,7 +474,66 @@ mod tests {
         assert_eq!(lines[1], "    Wagyu Burger            ");
 
         for line in &lines {
-            assert_eq!(line.chars().count(), 28);
+            assert_eq!(str_display_width(line), 28);
+        }
+    }
+
+    #[test]
+    fn test_resolve_proportional_fractions_sum_under_one() {
+        // Two columns with 0.3 fraction each should share remaining space 50/50 (24 and 24 on 48 cols)
+        let cols = [
+            TableColumn::fraction(0.3, Alignment::Left),
+            TableColumn::fraction(0.3, Alignment::Right),
+        ];
+        let widths = resolve_column_widths(&cols, 48);
+        assert_eq!(widths, vec![24, 24]);
+    }
+
+    #[test]
+    fn test_wrap_text_with_explicit_newlines() {
+        let text = "Double Burger\n- Rare\n- Extra Pickles";
+        let lines = wrap_text_to_width(text, 20);
+        assert_eq!(lines, vec!["Double Burger", "- Rare", "- Extra Pickles"]);
+    }
+
+    #[test]
+    fn test_cjk_fullwidth_character_display_width() {
+        // Japanese: "ラーメン" has 4 chars, but 8 display width units
+        assert_eq!(str_display_width("ラーメン"), 8);
+
+        // Alignment with Japanese fullwidth characters
+        let aligned = align_text("牛丼", 8, Alignment::Left);
+        assert_eq!(str_display_width(&aligned), 8);
+        assert_eq!(aligned, "牛丼    ");
+
+        // Two column with CJK
+        let row = format_two_column("1x 抹茶ラテ", "¥450", 20);
+        assert_eq!(str_display_width(&row), 20);
+    }
+
+    #[test]
+    fn test_arabic_text_display_width() {
+        // Standard Arabic letters (each is 1 monospace width column)
+        // "قهوة" (Coffee): 4 base letters -> display width 4
+        assert_eq!(str_display_width("قهوة"), 4);
+
+        // Arabic text with diacritics / tashkeel: "شُكْرًا" (Thank you)
+        // Base letters: ش, ك, ر, ا (4 letters)
+        // Tashkeel combining marks: ُ (dammah), ْ (sukun), ً (tanwin fath)
+        // unicode-width correctly treats non-spacing combining marks as 0 width (total width 4),
+        // whereas raw .chars().count() would incorrectly count 7!
+        assert_eq!("شُكْرًا".chars().count(), 7);
+        assert_eq!(str_display_width("شُكْرًا"), 4);
+
+        // Two-column receipt row with Arabic item and price
+        let row = format_two_column("قهوة عربية", "1.500 KWD", 24);
+        assert_eq!(str_display_width(&row), 24);
+
+        // Word wrapping Arabic text
+        let arabic_menu = "شاورما دجاج مع ثوم ومخلل وبطاطا";
+        let wrapped = wrap_text_to_width(arabic_menu, 16);
+        for line in &wrapped {
+            assert!(str_display_width(line) <= 16);
         }
     }
 }
