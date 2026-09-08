@@ -25,6 +25,11 @@ pub enum PapermintError {
     #[cfg(feature = "std")]
     #[error("io error: {0}")]
     Io(#[from] std::io::Error),
+
+    /// An image processing error (only available with `image` feature).
+    #[cfg(feature = "image")]
+    #[error("image error: {0}")]
+    Image(#[from] ::image::ImageError),
 }
 
 /// Convenience alias used throughout the crate.

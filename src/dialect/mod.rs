@@ -1,7 +1,8 @@
 //! Printer dialect abstractions.
 //!
 //! A [`Dialect`] defines how high-level [`Command`] intermediate
-//! representations are translated into vendor-specific byte sequences.
+//! representations are translated into vendor-specific byte sequences (such as
+//! Epson ESC/POS, StarPRNT, Citizen, etc.).
 
 use crate::command::Command;
 use crate::error::Result;

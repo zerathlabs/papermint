@@ -1,4 +1,4 @@
-// papermint — Thermal Printing Library
+// papermint — The GOAT Thermal Printing Library
 //
 // Three-layer architecture:
 //   Layer 3 (Layout)    → Receipt builder produces Vec<Command>
@@ -11,6 +11,7 @@ pub mod encoder;
 pub mod error;
 
 pub mod dialect;
+
 pub mod layout;
 
 #[cfg(feature = "async")]
@@ -43,3 +44,9 @@ pub use transport::tcp::TcpTransport;
 
 #[cfg(feature = "async")]
 pub use transport::vec_sink::VecSink;
+
+#[cfg(feature = "image")]
+pub mod image;
+
+#[cfg(feature = "image")]
+pub use self::image::DitherMode;

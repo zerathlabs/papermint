@@ -1,7 +1,7 @@
 //! Printer communication transports.
 //!
 //! A [`Transport`] is responsible for delivering raw byte buffers to the
-//! physical or virtual printer destination (TCP network, memory buffer, etc.).
+//! physical or virtual printer destination (TCP network, USB, Serial, Bluetooth, memory buffer, etc.).
 
 use crate::error::Result;
 
