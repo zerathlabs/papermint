@@ -21,6 +21,14 @@ pub enum PapermintError {
     #[error("invalid command: {0}")]
     InvalidCommand(String),
 
+    /// The dialect encountered an error parsing or generating commands.
+    #[error("dialect error: {0}")]
+    Dialect(String),
+
+    /// A protocol error occurred during communication.
+    #[error("protocol error: {0}")]
+    Protocol(String),
+
     /// An underlying I/O error (only available with `std` feature).
     #[cfg(feature = "std")]
     #[error("io error: {0}")]

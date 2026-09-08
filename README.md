@@ -204,6 +204,37 @@ let receipt = Receipt::new(PaperWidth::Mm80)
     .cut_full();
 ```
 
+### 5. Real-Time Hardware Status & Sensor Telemetry
+
+Query printer readiness, paper low warnings, cover open, cutter jams, and cash drawer state in real time:
+
+```rust
+use papermint::{Printer, PaperStatus, CoverStatus, DrawerStatus};
+
+// Query real-time telemetry (ESC/POS or StarPRNT)
+let status = printer.query_status().await?;
+
+if !status.is_ready() {
+    if status.cover == CoverStatus::Open {
+        eprintln!("Warning: Printer cover is open!");
+    }
+    if status.paper == PaperStatus::Empty {
+        eprintln!("Error: Out of paper roll!");
+    }
+    if status.cutter_error {
+        eprintln!("Alert: Auto-cutter jammed!");
+    }
+}
+
+if status.paper == PaperStatus::NearEnd {
+    println!("Notice: Paper roll is running low, replace soon.");
+}
+
+if status.drawer == DrawerStatus::Open {
+    println!("Cash drawer is currently open.");
+}
+```
+
 ---
 
 ## Documentation & Guides

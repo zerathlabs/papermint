@@ -9,6 +9,7 @@ pub mod codepage;
 pub mod command;
 pub mod encoder;
 pub mod error;
+pub mod status;
 
 pub mod dialect;
 
@@ -26,6 +27,7 @@ pub use codepage::CodePage;
 pub use command::*;
 pub use encoder::Encoder;
 pub use error::PapermintError;
+pub use status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
 
 #[cfg(feature = "escpos")]
 pub use dialect::escpos::EscPos;

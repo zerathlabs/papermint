@@ -9,6 +9,7 @@ use crate::command::{
 };
 use crate::dialect::Dialect;
 use crate::error::{PapermintError, Result};
+use crate::status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
 
 // Standard ESC/POS Control Characters
 const ESC: u8 = 0x1B; // 27 in decimal
@@ -336,4 +337,85 @@ impl Dialect for EscPos {
 
         Ok(())
     }
+
+    fn status_query_command(&self) -> Vec<u8> {
+        // DLE EOT 1 (Printer status) + DLE EOT 2 (Offline cause) + DLE EOT 3 (Error cause) + DLE EOT 4 (Paper sensor)
+        vec![
+            0x10, 0x04, 0x01,
+            0x10, 0x04, 0x02,
+            0x10, 0x04, 0x03,
+            0x10, 0x04, 0x04,
+        ]
+    }
+
+    fn expected_status_bytes(&self) -> usize {
+        4
+    }
+
+    fn parse_status_response(&self, bytes: &[u8]) -> Result<PrinterStatus> {
+        if bytes.is_empty() {
+            return Err(PapermintError::Dialect("empty status response from ESC/POS printer".into()));
+        }
+
+        let mut status = PrinterStatus::default();
+
+        if bytes.len() >= 4 {
+            let b1 = bytes[0];
+            let b2 = bytes[1];
+            let b3 = bytes[2];
+            let b4 = bytes[3];
+
+            // DLE EOT 1: Printer status
+            status.is_online = (b1 & 0x08) == 0;
+            status.drawer = if (b1 & 0x04) != 0 {
+                DrawerStatus::Open
+            } else {
+                DrawerStatus::Closed
+            };
+
+            // DLE EOT 2: Offline status
+            status.cover = if (b2 & 0x04) != 0 {
+                CoverStatus::Open
+            } else {
+                CoverStatus::Closed
+            };
+
+            // DLE EOT 3: Error status
+            status.cutter_error = (b3 & 0x08) != 0;
+            status.head_overheated = (b3 & 0x40) != 0;
+
+            // DLE EOT 4: Paper roll sensor
+            if (b4 & 0x60) != 0 || (b2 & 0x20) != 0 {
+                status.paper = PaperStatus::Empty;
+            } else if (b4 & 0x0C) != 0 {
+                status.paper = PaperStatus::NearEnd;
+            } else {
+                status.paper = PaperStatus::Adequate;
+            }
+        } else {
+            // Fallback for single-byte responses (GS r 1, ASB byte 1, or single DLE EOT)
+            let b = bytes[0];
+            status.is_online = (b & 0x08) == 0;
+            status.drawer = if (b & 0x04) != 0 {
+                DrawerStatus::Open
+            } else {
+                DrawerStatus::Closed
+            };
+            status.cover = if (b & 0x20) != 0 {
+                CoverStatus::Open
+            } else {
+                CoverStatus::Closed
+            };
+            if (b & 0x60) == 0x60 || (b & 0x40) != 0 {
+                status.paper = PaperStatus::Empty;
+            } else if (b & 0x0C) == 0x0C {
+                status.paper = PaperStatus::NearEnd;
+            } else {
+                status.paper = PaperStatus::Adequate;
+            }
+        }
+
+        Ok(status)
+    }
 }
+

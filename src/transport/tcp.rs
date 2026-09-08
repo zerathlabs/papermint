@@ -4,7 +4,7 @@ use std::net::SocketAddr;
 use std::time::Duration;
 
 use async_trait::async_trait;
-use tokio::io::AsyncWriteExt;
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio::time::timeout;
 
@@ -18,6 +18,7 @@ pub struct TcpTransport {
     stream: Option<TcpStream>,
     connect_timeout: Duration,
     write_timeout: Duration,
+    read_timeout: Duration,
 }
 
 impl TcpTransport {
@@ -29,6 +30,7 @@ impl TcpTransport {
             stream: None,
             connect_timeout: Duration::from_secs(5),
             write_timeout: Duration::from_secs(5),
+            read_timeout: Duration::from_secs(5),
         }
     }
 
@@ -43,6 +45,13 @@ impl TcpTransport {
     #[must_use]
     pub const fn with_write_timeout(mut self, timeout: Duration) -> Self {
         self.write_timeout = timeout;
+        self
+    }
+
+    /// Configures the read timeout for telemetry and responses.
+    #[must_use]
+    pub const fn with_read_timeout(mut self, timeout: Duration) -> Self {
+        self.read_timeout = timeout;
         self
     }
 
@@ -123,4 +132,31 @@ impl Transport for TcpTransport {
             Ok(())
         }
     }
+
+    async fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        if self.stream.is_none() {
+            self.connect().await?;
+        }
+
+        let stream = self.stream.as_mut().expect("stream must be connected");
+        match timeout(self.read_timeout, stream.read(buf)).await {
+            Ok(Ok(0)) => {
+                // EOF / connection closed by remote peer
+                self.stream = None;
+                Ok(0)
+            }
+            Ok(Ok(n)) => Ok(n),
+            Ok(Err(e)) => {
+                self.stream = None;
+                Err(PapermintError::Io(e))
+            }
+            Err(_) => {
+                self.stream = None;
+                Err(PapermintError::Timeout(
+                    self.read_timeout.as_millis() as u64,
+                ))
+            }
+        }
+    }
 }
+

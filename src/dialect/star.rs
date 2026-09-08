@@ -9,6 +9,7 @@ use crate::command::{
 };
 use crate::dialect::Dialect;
 use crate::error::{PapermintError, Result};
+use crate::status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
 
 // Standard Star Control Characters
 const ESC: u8 = 0x1B;
@@ -352,4 +353,73 @@ impl Dialect for Star {
 
         Ok(())
     }
+
+    fn status_query_command(&self) -> Vec<u8> {
+        // ENQ (0x05): Star real-time status inquiry
+        vec![0x05]
+    }
+
+    fn expected_status_bytes(&self) -> usize {
+        1
+    }
+
+    fn parse_status_response(&self, bytes: &[u8]) -> Result<PrinterStatus> {
+        if bytes.is_empty() {
+            return Err(PapermintError::Dialect("empty status response from Star printer".into()));
+        }
+
+        let mut status = PrinterStatus::default();
+
+        if bytes.len() >= 3 {
+            // Multi-byte ASB (Auto Status Back) Frame
+            let b1 = bytes[0];
+            let b2 = bytes[1];
+            let b3 = bytes[2];
+
+            status.is_online = (b1 & 0x08) == 0;
+            status.cover = if (b1 & 0x20) != 0 {
+                CoverStatus::Open
+            } else {
+                CoverStatus::Closed
+            };
+            status.drawer = if (b1 & 0x04) != 0 {
+                DrawerStatus::Open
+            } else {
+                DrawerStatus::Closed
+            };
+
+            status.cutter_error = (b2 & 0x08) != 0;
+            status.head_overheated = (b2 & 0x40) != 0;
+
+            if (b1 & 0x40) != 0 {
+                status.paper = PaperStatus::Empty;
+            } else if (b3 & 0x0C) != 0 {
+                status.paper = PaperStatus::NearEnd;
+            } else {
+                status.paper = PaperStatus::Adequate;
+            }
+        } else {
+            // Single-byte ENQ response (0x05)
+            let b = bytes[0];
+            status.is_online = (b & 0x08) == 0;
+            status.drawer = if (b & 0x04) != 0 {
+                DrawerStatus::Open
+            } else {
+                DrawerStatus::Closed
+            };
+            status.cover = if (b & 0x20) != 0 {
+                CoverStatus::Open
+            } else {
+                CoverStatus::Closed
+            };
+            status.paper = if (b & 0x40) != 0 {
+                PaperStatus::Empty
+            } else {
+                PaperStatus::Adequate
+            };
+        }
+
+        Ok(status)
+    }
 }
+

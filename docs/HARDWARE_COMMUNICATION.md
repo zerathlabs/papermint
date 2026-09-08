@@ -206,4 +206,41 @@ Star Micronics printers (TSP100, TSP650, TSP700, mC-Print series) use the Star L
 | **1D Barcode** | `GS k m n d1..dk` (`m=65..73`, auto `{B`) | `ESC b n1 n2 n3 n4 d1..dk RS` (`n1=0..8`) | 0-indexed symbologies in Star |
 | **QR Code** | `GS ( k ...` (Function 165–181) | `ESC GS y S ...` | 5-step hardware QR sequence |
 | **Raster Image** | `GS v 0 0 xL xH yL yH <data>` | `ESC * r A` / `ESC * r b ...` / `ESC * r B` | Native 1-bit monochrome raster |
+| **Status Query** | `DLE EOT 1..4` (`[0x10, 0x04, 1..4]`) | `ENQ` (`0x05`) / ASB | Immediate real-time status inquiry |
+
+---
+
+## 8. Real-Time Hardware Status & Telemetry
+
+### 8.1 Why Real-Time (`DLE EOT`) vs. In-Buffer (`GS r`) Matters
+
+- **`GS r` (In-Buffer Transmit)**: Commands are placed in the printer's receive buffer and evaluated in FIFO sequence. If the printer runs out of paper or the cover is open, buffer processing freezes. As a result, an in-buffer status request will never execute while the printer is in an error condition!
+- **`DLE EOT` (Real-Time Transmit)**: Real-time commands bypass the receive buffer and are executed immediately by the printer's interface controller (UART/Ethernet/USB chip) even during active errors, buffer-full conditions, or paper jams.
+
+### 8.2 ESC/POS `DLE EOT n` Specification
+
+Executing `DLE EOT 1..4` (`0x10 0x04 0x01` through `0x10 0x04 0x04`) returns a 4-byte response packet:
+
+| Query | Command Bytes | Bit | Meaning | Value |
+| :--- | :--- | :---: | :--- | :--- |
+| **DLE EOT 1** | `10 04 01` | Bit 2 | Cash drawer pin 3 switch | `0`: Closed, `1`: Open |
+| | | Bit 3 | Online / Offline | `0`: Online, `1`: Offline |
+| **DLE EOT 2** | `10 04 02` | Bit 2 | Cover status | `0`: Closed, `1`: Open |
+| | | Bit 5 | Printing stopped (paper out) | `0`: Normal, `1`: Out of paper |
+| **DLE EOT 3** | `10 04 03` | Bit 3 | Auto-cutter status | `0`: Normal, `1`: Cutter error |
+| | | Bit 6 | Thermal print head | `0`: Normal temp, `1`: Overheated |
+| **DLE EOT 4** | `10 04 04` | Bits 2, 3 | Roll near-end sensor | `00`: Adequate, `11` (`0x0C`): Near-end |
+| | | Bits 5, 6 | Roll end sensor | `00`: Paper present, `11` (`0x60`): Empty |
+
+*(Note: In official Epson specifications, bits 1 and 4 of every DLE EOT response byte are fixed to `1`, yielding an idle base mask of `0x12`).*
+
+### 8.3 StarPRNT Status Specification
+
+- **Real-Time Inquiry (`ENQ`, `0x05`)**: Transmits a 1-byte immediate response:
+  - Bit 2: Cash drawer switch (`1`: Open)
+  - Bit 3: Offline status (`1`: Offline)
+  - Bit 5: Cover open (`1`: Open)
+  - Bit 6: Paper empty (`1`: Empty)
+- **Auto Status Back (ASB)**: Star printers transmit a 3-to-4 byte frame reporting cover, drawer, near-end detector, cutter jam, and head overheat.
+
 

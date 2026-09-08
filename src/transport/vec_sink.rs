@@ -13,6 +13,7 @@ use crate::transport::Transport;
 #[derive(Debug, Clone, Default)]
 pub struct VecSink {
     buffer: Arc<Mutex<Vec<u8>>>,
+    read_buffer: Arc<Mutex<Vec<u8>>>,
 }
 
 impl VecSink {
@@ -21,7 +22,14 @@ impl VecSink {
     pub fn new() -> Self {
         Self {
             buffer: Arc::new(Mutex::new(Vec::new())),
+            read_buffer: Arc::new(Mutex::new(Vec::new())),
         }
+    }
+
+    /// Sets simulated response bytes for subsequent [`Transport::read`] calls.
+    pub fn set_read_response(&self, bytes: impl Into<Vec<u8>>) {
+        let mut rb = self.read_buffer.lock().unwrap_or_else(|e| e.into_inner());
+        *rb = bytes.into();
     }
 
     /// Returns a copy of all bytes written so far.
@@ -61,4 +69,16 @@ impl Transport for VecSink {
     async fn flush(&mut self) -> Result<()> {
         Ok(())
     }
+
+    async fn read(&mut self, buf: &mut [u8]) -> Result<usize> {
+        let mut rb = self.read_buffer.lock().unwrap_or_else(|e| e.into_inner());
+        let to_read = buf.len().min(rb.len());
+        if to_read == 0 {
+            return Ok(0);
+        }
+        buf[..to_read].copy_from_slice(&rb[..to_read]);
+        rb.drain(..to_read);
+        Ok(to_read)
+    }
 }
+
