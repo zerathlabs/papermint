@@ -208,6 +208,8 @@ Star Micronics printers (TSP100, TSP650, TSP700, mC-Print series) use the Star L
 | **QR Code** | `GS ( k ...` (Function 165–181) | `ESC GS y S ...` | 5-step hardware QR sequence |
 | **Raster Image** | `GS v 0 0 xL xH yL yH <data>` | `ESC * r A` / `ESC * r b ...` / `ESC * r B` | Native 1-bit monochrome raster |
 | **Status Query** | `DLE EOT 1..4` (`[0x10, 0x04, 1..4]`) | `ENQ` (`0x05`) / ASB | Immediate real-time status inquiry |
+| **Print Density** | `GS ( K 2 0 48 m` (`0x1D 0x28 0x4B 0x02 0x00 0x30 m`) | `ESC GS # '0' n LF NUL` (`0x1B 0x1D 0x23 0x30 n 0x0A 0x00`) | Calibration for paper sensitivity & contrast |
+| **Heating Parameters** | `ESC 7 n1 n2 n3` (`0x1B 0x37 n1 n2 n3`) | `ESC 7 n1 n2 n3` (`0x1B 0x37 n1 n2 n3`) | Head strobe timing (max dots, heat time, interval) |
 
 ---
 
@@ -296,6 +298,45 @@ Both Epson ESC/POS and StarPRNT Line Mode share the `ESC R n` (`0x1B 0x52 n`) co
 | **`Pc857`** | Turkish | `13` | `69` |
 | **`Iso8859_15`** | Latin 9 (with Euro `0xA4`) | `40` | `40` |
 | **`Pc874`** | Thai | `20` | `22` |
+
+---
+
+## 10. Thermal Printhead Energy & Density Calibration
+
+Thermal printers heat micro-resistors on a linear dot printhead to activate thermal dye embedded in chemical paper. The optimal energy required depends on:
+1. **Paper stock sensitivity**: Economical thermal paper typically requires higher heat energy to produce dark black dots, whereas premium high-sensitivity coated labels require less heat to prevent blooming or ghosting.
+2. **Ambient temperature**: Colder operating environments (warehouses, outdoor food trucks) require longer pulse times to achieve dot saturation; hot kitchen environments require lower pulse durations to avoid thermal runaway.
+3. **Optical contrast requirements**: 2D Barcodes (QR codes, PDF417) and 1-bit raster graphics require sharp dot edges without bleed.
+
+### 10.1 ESC/POS Density Specification (`GS ( K`)
+
+Epson ESC/POS controls print density via Function 48 of the mechanism control sequence:
+`GS ( K pL pH fn m` (`0x1D 0x28 0x4B 0x02 0x00 0x30 m`) where:
+- `pL = 2`, `pH = 0` (parameter length: 2 bytes)
+- `fn = 48` (`0x30`): Function 48 (select print density)
+- `m`: Density level
+  - `253` (`0xFD`, `-3` in two's complement): Light (~85% energy)
+  - `0` (`0x00`): Normal (100% factory default)
+  - `3` (`0x03`, `+3`): Dark (~115% energy)
+  - `6` (`0x06`, `+6`): High Contrast (~130% energy)
+
+### 10.2 StarPRNT Density Specification (`ESC GS #`)
+
+Star Micronics Line Mode configures print density via the memory switch / density control command:
+`ESC GS # '0' n LF NUL` (`0x1B 0x1D 0x23 0x30 n 0x0A 0x00`) where `n` is an ASCII digit:
+- `n = '1'` (`0x31`): -2 Light
+- `n = '2'` (`0x32`): -1 Medium Light
+- `n = '3'` (`0x33`): Standard Normal (100%)
+- `n = '4'` (`0x34`): +1 Dark
+- `n = '5'` (`0x35`): +2 High Contrast
+
+### 10.3 Heating Strobe Timing Parameters (`ESC 7`)
+
+Direct thermal mechanisms allow fine-grained strobe and pulse timing calibration via `ESC 7 n1 n2 n3` (`0x1B 0x37 n1 n2 n3`):
+- `n1` = Maximum heating dots (unit: 8 dots, default `7` = 56 dots). Restricts peak instantaneous current draw across the printhead array.
+- `n2` = Heating pulse duration in 10 µs increments (default `80` = 800 µs). Direct micro-resistor activation time.
+- `n3` = Heating interval between pulses in 10 µs increments (default `2` = 20 µs). Minimum thermal cooling interval before firing adjacent dots.
+
 
 
 

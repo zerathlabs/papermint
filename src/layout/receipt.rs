@@ -3,8 +3,8 @@
 use crate::charset::InternationalCharset;
 use crate::codepage::CodePage;
 use crate::command::{
-    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
-    QrCorrectionLevel, QrData, UnderlineMode,
+    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily,
+    HeatingParameters, ImageData, PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
 };
 use crate::layout::column::{
     format_table_row, format_three_column, format_two_column, PaperWidth, TableColumn,
@@ -480,6 +480,44 @@ impl Receipt {
     #[must_use]
     pub fn charset_arabia(self) -> Self {
         self.international_charset(InternationalCharset::Arabia)
+    }
+
+    /// Sets the thermal printhead dot density.
+    #[must_use]
+    pub fn print_density(mut self, density: PrintDensity) -> Self {
+        self.commands.push(Command::PrintDensity(density));
+        self
+    }
+
+    /// Convenience for setting density to [`PrintDensity::Light`].
+    #[must_use]
+    pub fn density_light(self) -> Self {
+        self.print_density(PrintDensity::Light)
+    }
+
+    /// Convenience for setting density to [`PrintDensity::Normal`].
+    #[must_use]
+    pub fn density_normal(self) -> Self {
+        self.print_density(PrintDensity::Normal)
+    }
+
+    /// Convenience for setting density to [`PrintDensity::Dark`].
+    #[must_use]
+    pub fn density_dark(self) -> Self {
+        self.print_density(PrintDensity::Dark)
+    }
+
+    /// Convenience for setting density to [`PrintDensity::HighContrast`].
+    #[must_use]
+    pub fn density_high_contrast(self) -> Self {
+        self.print_density(PrintDensity::HighContrast)
+    }
+
+    /// Sets the thermal printhead heating strobe and interval parameters.
+    #[must_use]
+    pub fn heating_parameters(mut self, params: HeatingParameters) -> Self {
+        self.commands.push(Command::HeatingParameters(params));
+        self
     }
 
     /// Appends raw bytes directly to the printer command stream.

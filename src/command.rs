@@ -98,6 +98,43 @@ pub struct ImageData {
     pub pixels: Vec<u8>,
 }
 
+/// Printhead density / dot darkness level.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum PrintDensity {
+    /// Light density (~85% energy). Best for high-sensitivity paper.
+    Light,
+    /// Standard density (100% default factory calibration).
+    #[default]
+    Normal,
+    /// Dark density (~115% energy). Enhances optical contrast for barcodes and QR codes.
+    Dark,
+    /// High-contrast dark (~130% energy). Best for synthetic or low-sensitivity paper.
+    HighContrast,
+    /// Custom vendor-specific density value.
+    Custom(u8),
+}
+
+/// Thermal printhead heating strobe and pulse timing parameters (`ESC 7 n1 n2 n3`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct HeatingParameters {
+    /// Maximum dots heated simultaneously (unit: 8 dots, e.g. 7 = 56 dots).
+    pub max_heating_dots: u8,
+    /// Heating pulse duration in 10µs units (e.g. 80 = 800µs).
+    pub heating_time: u8,
+    /// Interval between heating pulses in 10µs units (e.g. 2 = 20µs).
+    pub heating_interval: u8,
+}
+
+impl Default for HeatingParameters {
+    fn default() -> Self {
+        Self {
+            max_heating_dots: 7,   // 56 dots
+            heating_time: 80,      // 800 µs
+            heating_interval: 2,   // 20 µs
+        }
+    }
+}
+
 /// The intermediate representation between layout and encoding.
 ///
 /// Each variant maps to a single printer instruction. The layout engine
@@ -179,6 +216,12 @@ pub enum Command {
 
     /// Select international character set (e.g., [`InternationalCharset::Uk`], [`InternationalCharset::France`]).
     InternationalCharset(InternationalCharset),
+
+    /// Set printhead dot darkness density.
+    PrintDensity(PrintDensity),
+
+    /// Configure thermal heating pulse and strobe timing parameters (`ESC 7 n1 n2 n3`).
+    HeatingParameters(HeatingParameters),
 
     /// Inject raw bytes directly (escape hatch for vendor-specific commands).
     Raw(Vec<u8>),

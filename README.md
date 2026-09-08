@@ -255,6 +255,28 @@ let receipt = Receipt::new(PaperWidth::Mm80)
     .cut_full();
 ```
 
+### 7. Thermal Printhead Energy & Density Calibration
+
+Calibrate printhead strobe pulses and burn darkness to match specific thermal paper sensitivities or cold/hot operating environments:
+
+```rust
+use papermint::{Receipt, PaperWidth, PrintDensity, HeatingParameters};
+
+let receipt = Receipt::new(PaperWidth::Mm80)
+    .init()
+    // Increase density for high optical contrast on 2D barcodes or low-sensitivity paper:
+    .density_dark() // or .density_light(), .density_normal(), .density_high_contrast()
+    // Configure low-level thermal strobe timings: max dots, heat time (x10µs), interval (x10µs)
+    .heating_parameters(HeatingParameters {
+        max_heating_dots: 8,    // 64 dots simultaneously
+        heating_time: 90,       // 900 µs pulse duration
+        heating_interval: 3,    // 30 µs cooling interval
+    })
+    .text_ln("Crisp, High-Contrast Receipt")
+    .feed(2)
+    .cut_full();
+```
+
 ---
 
 ## Documentation & Guides

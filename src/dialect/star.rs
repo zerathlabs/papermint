@@ -5,8 +5,8 @@ use std::sync::RwLock;
 
 use crate::codepage::CodePage;
 use crate::command::{
-    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
-    QrCorrectionLevel, QrData, UnderlineMode,
+    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily,
+    ImageData, PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
 };
 use crate::dialect::Dialect;
 use crate::error::{PapermintError, Result};
@@ -372,6 +372,29 @@ impl Dialect for Star {
             Command::InternationalCharset(charset) => {
                 // ESC R n: Select international character set
                 buf.extend_from_slice(&[ESC, b'R', charset.code()]);
+            }
+
+            Command::PrintDensity(density) => {
+                // Star Line Mode: ESC GS # '0' n LF NUL
+                let n = match density {
+                    PrintDensity::Light => b'1',
+                    PrintDensity::Normal => b'3',
+                    PrintDensity::Dark => b'4',
+                    PrintDensity::HighContrast => b'5',
+                    PrintDensity::Custom(val) => *val,
+                };
+                buf.extend_from_slice(&[ESC, GS, b'#', b'0', n, 0x0A, 0x00]);
+            }
+
+            Command::HeatingParameters(params) => {
+                // ESC 7 n1 n2 n3 mechanism strobe
+                buf.extend_from_slice(&[
+                    ESC,
+                    b'7',
+                    params.max_heating_dots,
+                    params.heating_time,
+                    params.heating_interval,
+                ]);
             }
 
             Command::Barcode(data) => self.encode_barcode(data, buf)?,
