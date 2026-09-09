@@ -59,6 +59,14 @@ export declare class Receipt {
   cutPartial(): this
   /** Prints a full horizontal divider line spanning paper width. */
   divider(ch?: string | undefined | null): this
+  /** Prints a double-line horizontal divider rule (`================`). */
+  dividerDouble(): this
+  /** Prints a dotted horizontal divider rule (`................`). */
+  dividerDotted(): this
+  /** Prints a dashed horizontal divider rule (`- - - - - - - - `). */
+  dividerDashed(): this
+  /** Prints a repeating pattern horizontal divider rule across paper width. */
+  dividerPattern(pattern: string): this
   /** Prints a 2-column row (left aligned left, right aligned right). */
   twoColumn(left: string, right: string): this
   /** Prints a 3-column row (left, center, right). */

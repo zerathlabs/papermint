@@ -14,7 +14,7 @@ const receipt = new Receipt('80mm')
   .doubleSize(false)
   .bold(false)
   .textLn('123 Main Street')
-  .divider('=')
+  .dividerDouble()
   .tableHeader(
     ['QTY', 'DESCRIPTION', 'PRICE', 'TOTAL'],
     [
@@ -26,8 +26,10 @@ const receipt = new Receipt('80mm')
   )
   .row(['2x', 'Truffle Wagyu Burger with Caramelized Onions', '$14.50', '$29.00'])
   .row(['1x', 'Wood-Fired Margherita Pizza', '$18.00', '$18.00'])
-  .divider('-')
+  .dividerDashed()
   .twoColumn('BALANCE DUE:', '$47.00')
+  .dividerDotted()
+  .dividerPattern('=-')
   .qr('https://pay.mintbistro.com/bill/1042')
   .barcode128('TX-1042')
   .cutFull();

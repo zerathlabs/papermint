@@ -186,3 +186,26 @@ fn test_receipt_fluent_image_loading_and_encoding() {
         "Star output must contain ESC * r A raster mode enter"
     );
 }
+
+#[test]
+fn test_atkinson_dithering_gradient() {
+    let img = image::DynamicImage::ImageRgba8(ImageBuffer::from_pixel(
+        32,
+        32,
+        Rgba([128, 128, 128, 255]),
+    ));
+    let dithered = dither_dynamic_image(&img, None, DitherMode::Atkinson);
+
+    assert_eq!(dithered.width, 32);
+    assert_eq!(dithered.height, 32);
+    let black_dots: u32 = dithered.pixels.iter().map(|b| b.count_ones()).sum();
+    let total_pixels = 32 * 32;
+
+    // Atkinson diffuses 75% error and discards 25%, so the black dot percentage
+    // should be nicely balanced between 40% and 60% of total pixels.
+    let black_ratio = black_dots as f64 / total_pixels as f64;
+    assert!(
+        (0.40..=0.60).contains(&black_ratio),
+        "Atkinson 50% gray black dot ratio should be ~0.50, got {black_ratio}"
+    );
+}

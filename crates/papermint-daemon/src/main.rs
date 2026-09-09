@@ -149,6 +149,7 @@ pub struct TicketPayload {
     pub cut_mode: Option<String>, // "full", "partial", "none"
     pub open_drawer: Option<bool>,
     pub beep: Option<u8>,
+    pub divider_style: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -502,15 +503,25 @@ fn build_receipt_from_ticket(paper_width: PaperWidth, ticket: TicketPayload) -> 
         receipt = receipt.center().text_ln(addr);
     }
 
+    let divider_style = ticket.divider_style.as_deref();
+    let apply_divider = |r: Receipt, style: Option<&str>| match style {
+        Some("double") => r.divider_double(),
+        Some("dotted") => r.divider_dotted(),
+        Some("dashed") => r.divider_dashed(),
+        Some(pat) if pat.len() > 1 => r.divider_pattern(pat),
+        Some(single) if single.len() == 1 => r.divider(single.chars().next().unwrap_or('-')),
+        _ => r.divider('-'),
+    };
+
     if let Some(meta) = ticket.metadata {
-        receipt = receipt.divider('-');
+        receipt = apply_divider(receipt, divider_style);
         for m in meta {
             receipt = receipt.two_column(m.label, m.value);
         }
     }
 
     if let Some(items) = ticket.items {
-        receipt = receipt.divider('=');
+        receipt = apply_divider(receipt, divider_style.or(Some("double")));
         let columns = [
             TableColumn::fixed(4, Alignment::Left),
             TableColumn::fraction(0.52, Alignment::Left),
@@ -518,7 +529,7 @@ fn build_receipt_from_ticket(paper_width: PaperWidth, ticket: TicketPayload) -> 
             TableColumn::fraction(0.24, Alignment::Right),
         ];
         receipt = receipt.table_header(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns);
-        receipt = receipt.divider('-');
+        receipt = apply_divider(receipt, divider_style);
         for item in items {
             let unit = item.price.unwrap_or_default();
             receipt = receipt.row(&[&item.qty, &item.description, &unit, &item.total]);
@@ -526,7 +537,7 @@ fn build_receipt_from_ticket(paper_width: PaperWidth, ticket: TicketPayload) -> 
     }
 
     if let Some(totals) = ticket.totals {
-        receipt = receipt.divider('=');
+        receipt = apply_divider(receipt, divider_style.or(Some("double")));
         for t in totals {
             receipt = receipt.two_column(t.label, t.value);
         }

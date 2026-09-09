@@ -173,15 +173,29 @@ impl EscPos {
             )));
         }
 
-        // GS v 0 m xL xH yL yH d1..dk
-        // m: 0 = normal mode
+        // Standard thermal printer safe raster chunk height (dots).
+        // Sending images taller than 960 dots in a single GS v 0 command can overflow
+        // printer volatile RAM (typically 4KB to 64KB on thermal receipt hardware).
+        // Slicing into consecutive 960-dot chunks renders seamlessly on paper
+        // with zero vertical gap and eliminates buffer overrun risks.
+        const MAX_CHUNK_HEIGHT: usize = 960;
+
+        let total_rows = img.height as usize;
         let x_l = (width_bytes & 0xFF) as u8;
         let x_h = ((width_bytes >> 8) & 0xFF) as u8;
-        let y_l = (img.height & 0xFF) as u8;
-        let y_h = ((img.height >> 8) & 0xFF) as u8;
 
-        buf.extend_from_slice(&[GS, b'v', b'0', 0, x_l, x_h, y_l, y_h]);
-        buf.extend_from_slice(&img.pixels[..expected_len]);
+        for chunk_start in (0..total_rows).step_by(MAX_CHUNK_HEIGHT) {
+            let chunk_height = (total_rows - chunk_start).min(MAX_CHUNK_HEIGHT);
+            let y_l = (chunk_height & 0xFF) as u8;
+            let y_h = ((chunk_height >> 8) & 0xFF) as u8;
+
+            let byte_start = chunk_start * width_bytes;
+            let byte_end = byte_start + (chunk_height * width_bytes);
+
+            // GS v 0 m xL xH yL yH d1..dk (m: 0 = normal mode)
+            buf.extend_from_slice(&[GS, b'v', b'0', 0, x_l, x_h, y_l, y_h]);
+            buf.extend_from_slice(&img.pixels[byte_start..byte_end]);
+        }
 
         Ok(())
     }

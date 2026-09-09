@@ -1,4 +1,4 @@
-use papermint::{PaperWidth, Printer, Receipt};
+use papermint::{Command, PaperWidth, Printer, Receipt};
 
 #[tokio::test]
 async fn test_receipt_builder_and_mock_printer() {
@@ -161,4 +161,63 @@ fn test_receipt_stateful_columns_and_row_builder() {
     assert!(all_text.contains("Caramelized Onions"));
     assert!(all_text.contains("$24.00"));
     assert!(all_text.contains("Mint Cooler"));
+}
+
+#[test]
+fn test_rich_dividers() {
+    let receipt_80mm = Receipt::new(PaperWidth::Mm80)
+        .divider_double()
+        .divider_dotted()
+        .divider_dashed()
+        .divider_pattern("=-");
+
+    let cols_80 = PaperWidth::Mm80.columns(); // 48
+    let cmds_80 = receipt_80mm.commands();
+
+    // Check divider_double
+    if let Command::Text(s) = &cmds_80[0] {
+        let trimmed = s.trim_end_matches('\n');
+        assert_eq!(trimmed.len(), cols_80);
+        assert!(trimmed.chars().all(|c| c == '='));
+    } else {
+        panic!("Expected Text command for divider_double");
+    }
+
+    // Check divider_dotted
+    if let Command::Text(s) = &cmds_80[1] {
+        let trimmed = s.trim_end_matches('\n');
+        assert_eq!(trimmed.len(), cols_80);
+        assert!(trimmed.chars().all(|c| c == '.'));
+    } else {
+        panic!("Expected Text command for divider_dotted");
+    }
+
+    // Check divider_dashed
+    if let Command::Text(s) = &cmds_80[2] {
+        let trimmed = s.trim_end_matches('\n');
+        assert_eq!(trimmed.len(), cols_80);
+        assert!(trimmed.starts_with("- - - "));
+    } else {
+        panic!("Expected Text command for divider_dashed");
+    }
+
+    // Check divider_pattern
+    if let Command::Text(s) = &cmds_80[3] {
+        let trimmed = s.trim_end_matches('\n');
+        assert_eq!(trimmed.len(), cols_80);
+        assert!(trimmed.starts_with("=-=-=-"));
+    } else {
+        panic!("Expected Text command for divider_pattern");
+    }
+
+    // Verify 58mm paper width too
+    let receipt_58mm = Receipt::new(PaperWidth::Mm58).divider_double();
+    let cols_58 = PaperWidth::Mm58.columns(); // 32
+    if let Command::Text(s) = &receipt_58mm.commands()[0] {
+        let trimmed = s.trim_end_matches('\n');
+        assert_eq!(trimmed.len(), cols_58);
+        assert!(trimmed.chars().all(|c| c == '='));
+    } else {
+        panic!("Expected Text command for 58mm divider_double");
+    }
 }

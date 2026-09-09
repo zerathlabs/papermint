@@ -216,6 +216,46 @@ impl Receipt {
         self.text_ln(rule)
     }
 
+    /// Prints a double-line horizontal divider rule (`================`).
+    #[must_use]
+    pub fn divider_double(self) -> Self {
+        self.divider('=')
+    }
+
+    /// Prints a dotted horizontal divider rule (`................`).
+    #[must_use]
+    pub fn divider_dotted(self) -> Self {
+        self.divider('.')
+    }
+
+    /// Prints a dashed horizontal divider rule (`- - - - - - - - `).
+    #[must_use]
+    pub fn divider_dashed(self) -> Self {
+        self.divider_pattern("- ")
+    }
+
+    /// Prints a repeating pattern horizontal divider rule across the entire paper width.
+    #[must_use]
+    pub fn divider_pattern(self, pattern: &str) -> Self {
+        if pattern.is_empty() {
+            return self;
+        }
+        let cols = self.columns();
+        let pat_width = crate::layout::column::str_display_width(pattern);
+        if pat_width == 0 {
+            return self;
+        }
+        let mut result = String::with_capacity(cols + pattern.len());
+        while crate::layout::column::str_display_width(&result) + pat_width <= cols {
+            result.push_str(pattern);
+        }
+        let cur_w = crate::layout::column::str_display_width(&result);
+        if cur_w < cols {
+            result.push_str(&" ".repeat(cols - cur_w));
+        }
+        self.text_ln(result)
+    }
+
     /// Prints a 2-column row with left text aligned left and right text aligned right.
     #[must_use]
     pub fn two_column(self, left: impl AsRef<str>, right: impl AsRef<str>) -> Self {

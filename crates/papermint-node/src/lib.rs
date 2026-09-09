@@ -168,6 +168,34 @@ impl JsReceipt {
         self
     }
 
+    /// Prints a double-line horizontal divider rule (`================`).
+    #[napi]
+    pub fn divider_double(&mut self) -> &Self {
+        self.inner = std::mem::take(&mut self.inner).divider_double();
+        self
+    }
+
+    /// Prints a dotted horizontal divider rule (`................`).
+    #[napi]
+    pub fn divider_dotted(&mut self) -> &Self {
+        self.inner = std::mem::take(&mut self.inner).divider_dotted();
+        self
+    }
+
+    /// Prints a dashed horizontal divider rule (`- - - - - - - - `).
+    #[napi]
+    pub fn divider_dashed(&mut self) -> &Self {
+        self.inner = std::mem::take(&mut self.inner).divider_dashed();
+        self
+    }
+
+    /// Prints a repeating pattern horizontal divider rule across paper width.
+    #[napi]
+    pub fn divider_pattern(&mut self, pattern: String) -> &Self {
+        self.inner = std::mem::take(&mut self.inner).divider_pattern(&pattern);
+        self
+    }
+
     /// Prints a 2-column row (left aligned left, right aligned right).
     #[napi]
     pub fn two_column(&mut self, left: String, right: String) -> &Self {

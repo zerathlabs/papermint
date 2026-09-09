@@ -25,6 +25,12 @@ pub enum DitherMode {
     /// Pixels with luminance strictly below this threshold become black; all others become white.
     /// Best for crisp monochrome line art, barcodes, and high-contrast vector logos.
     Threshold(u8),
+
+    /// Atkinson error diffusion (Bill Atkinson / MacPaint algorithm).
+    ///
+    /// Diffuses 3/4 of the quantization error across 6 neighboring pixels and discards
+    /// 1/4, preserving pure white backgrounds and razor-sharp contrast for thermal logos.
+    Atkinson,
 }
 
 /// Dithers a [`image::DynamicImage`] into a 1-bit packed [`ImageData`].
@@ -124,6 +130,47 @@ pub fn dither_dynamic_image(
                         let byte_idx = y * row_bytes + (x / 8);
                         let bit_mask = 0x80 >> (x % 8);
                         pixels[byte_idx] |= bit_mask;
+                    }
+                }
+            }
+        }
+
+        DitherMode::Atkinson => {
+            for y in 0..h {
+                for x in 0..w {
+                    let idx = y * w + x;
+                    let old_val = lum[idx].clamp(0.0, 255.0);
+                    let is_black = old_val < 128.0;
+                    let new_val = if is_black { 0.0 } else { 255.0 };
+                    let error = old_val - new_val;
+
+                    if is_black {
+                        let byte_idx = y * row_bytes + (x / 8);
+                        let bit_mask = 0x80 >> (x % 8);
+                        pixels[byte_idx] |= bit_mask;
+                    }
+
+                    // Atkinson divides error by 8 and distributes 1/8 to 6 neighbors:
+                    // (x+1, y), (x+2, y), (x-1, y+1), (x, y+1), (x+1, y+1), (x, y+2)
+                    // Discards 2/8 (1/4) of error to keep whites pure and reduce muddy background noise.
+                    let e = error / 8.0;
+                    if x + 1 < w {
+                        lum[idx + 1] += e;
+                    }
+                    if x + 2 < w {
+                        lum[idx + 2] += e;
+                    }
+                    if y + 1 < h {
+                        if x > 0 {
+                            lum[(y + 1) * w + (x - 1)] += e;
+                        }
+                        lum[(y + 1) * w + x] += e;
+                        if x + 1 < w {
+                            lum[(y + 1) * w + (x + 1)] += e;
+                        }
+                    }
+                    if y + 2 < h {
+                        lum[(y + 2) * w + x] += e;
                     }
                 }
             }

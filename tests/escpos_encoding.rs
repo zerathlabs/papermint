@@ -246,3 +246,51 @@ fn test_escpos_qr_code() {
             .any(|w| w == [0x1D, b'(', b'k', 3, 0, 49, 81, 48])
     );
 }
+
+#[test]
+fn test_escpos_tall_image_chunking() {
+    use papermint::ImageData;
+
+    let encoder = Encoder::escpos();
+    // Create an image that is 16 pixels wide (2 bytes) and 2000 pixels high.
+    // Safe chunk height is 960 dots.
+    // 2000 dots should be split into 3 chunks:
+    // - Chunk 1: 960 dots (y_l = 0xC0, y_h = 0x03)
+    // - Chunk 2: 960 dots (y_l = 0xC0, y_h = 0x03)
+    // - Chunk 3: 80 dots  (y_l = 0x50, y_h = 0x00)
+    let width = 16u32;
+    let height = 2000u32;
+    let width_bytes = 2usize;
+    let pixels = vec![0xAA; width_bytes * height as usize];
+
+    let img = ImageData {
+        width,
+        height,
+        pixels,
+    };
+
+    let bytes = encoder.encode(&[Command::Image(img)]).unwrap();
+
+    let mut headers = Vec::new();
+    let mut i = 0;
+    while i + 8 <= bytes.len() {
+        if bytes[i] == 0x1D && bytes[i + 1] == b'v' && bytes[i + 2] == b'0' && bytes[i + 3] == 0 {
+            let x_l = bytes[i + 4];
+            let x_h = bytes[i + 5];
+            let y_l = bytes[i + 6];
+            let y_h = bytes[i + 7];
+            let chunk_h = (y_l as usize) | ((y_h as usize) << 8);
+            let chunk_bytes = ((x_l as usize) | ((x_h as usize) << 8)) * chunk_h;
+            headers.push(chunk_h);
+            i += 8 + chunk_bytes;
+        } else {
+            i += 1;
+        }
+    }
+
+    assert_eq!(
+        headers,
+        vec![960, 960, 80],
+        "Expected 960, 960, and 80 dot chunk slices"
+    );
+}
