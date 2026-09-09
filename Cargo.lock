@@ -932,6 +932,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "papermint-mobile"
+version = "0.1.0"
+dependencies = [
+ "papermint",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "papermint-node"
 version = "0.1.0"
 dependencies = [

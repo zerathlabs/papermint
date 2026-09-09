@@ -40,6 +40,32 @@ Standard network-enabled thermal printers listen on **TCP Port 9100** (RAW socke
   3. Printer flushes buffer and executes cut.
   4. Connection closes or stays persistent depending on configuration.
 
+### Raw Driverless USB (USB Class 0x07 — Printers)
+Direct USB thermal printers implement the standard USB Device Class 7 (Printers). `papermint` communicates directly with bulk endpoints using `nusb` without requiring vendor drivers:
+- **Common Vendor IDs (VID)**:
+  - **Epson**: `0x04B8`
+  - **Star Micronics**: `0x0518`
+  - **Bixolon**: `0x1504`
+  - **Citizen**: `0x1D90`
+  - **Zebra**: `0x0A5F`
+  - **Xprinter / Generic**: `0x0483`, `0x0416`, `0x1FC9`, `0x20D1`
+- **Linux Non-Root Permissions (`udev` Rule)**:
+  To allow unprivileged POS applications to communicate with USB printers without `sudo`, create `/etc/udev/rules.d/99-thermal-printers.rules`:
+  ```bash
+  # Standard USB Class 7 (Printers)
+  SUBSYSTEM=="usb", ATTR{bInterfaceClass}=="07", MODE="0666", GROUP="plugdev"
+  ```
+  Then reload rules: `sudo udevadm control --reload-rules && sudo udevadm trigger`
+
+### RS-232 Serial & Bluetooth Classic (SPP)
+Thermal printers equipped with serial cables or paired over Bluetooth Classic (Serial Port Profile) operate via standard UART streams:
+- **Ports**:
+  - Linux: `/dev/ttyS0`, `/dev/ttyUSB0` (FTDI/Prolific adapter), `/dev/rfcomm0` (Bluetooth SPP)
+  - Windows: `COM1`, `COM3`, `COM4` (Bluetooth outgoing serial port)
+- **Standard Serial Settings**:
+  - Baud rate: 9600, 19200, 38400, or 115200 (check printer self-test sheet)
+  - Data bits: 8, Parity: None, Stop bits: 1, Flow control: DTR/DSR or RTS/CTS
+
 ### Cash Drawer Kick Port (RJ11 / RJ12)
 Cash drawers connect directly into the back of the thermal printer via a 6-pin modular connector:
 - **Pin 2 (Drive Circuit 1)**: Primary cash drawer trigger.

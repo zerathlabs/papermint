@@ -31,9 +31,10 @@ Built on a clean **three-layer architecture**:
                            │ emits wire bytes (Vec<u8>)
 ┌──────────────────────────▼──────────────────────────────┐
 │  Layer 1: Transports                                    │
-│  - Async TCP (IP/Ethernet POS printers)                 │
-│  - VecSink (In-memory testing, mock, PDF generation)    │
-│  - USB / Serial (future)                                │
+│  - Async TCP (RAW network POS printers on Port 9100)    │
+│  - Driverless USB (`nusb` OS-independent Class 7)       │
+│  - Serial / RS-232 & Bluetooth SPP (`tokio-serial`)     │
+│  - VecSink (In-memory testing, mock execution)          │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -424,8 +425,9 @@ curl -X POST http://127.0.0.1:8080/api/print \
 
 ## Documentation & Guides
 
+- [Architecture & Multi-Crate Workspace](docs/ARCHITECTURE.md) — 3-layer architecture, atomic state tracking, and Unicode column mathematics.
+- [Mobile POS & React Native Guide](docs/MOBILE_INTEGRATION.md) — Expo SDK 56+ Inline Modules, C-ABI FFI, and Bluetooth Classic/BLE streaming.
+- [Print Daemon HTTP REST API](docs/DAEMON_API.md) — `papermintd` endpoints, JSON ticket schemas, and hardware sensor telemetry.
 - [Hardware & Protocol Specification](docs/HARDWARE_COMMUNICATION.md) — Wire byte sequences, electrical drawer pulses, and QR symbology.
-- [Architecture & Internal Design](docs/ARCHITECTURE.md) — 3-layer architecture, atomic state tracking, and Unicode column mathematics.
-- [Supported Hardware Guide](docs/SUPPORTED_HARDWARE.md) — Tested printer brands, models, and DIP switch emulation configuration.
-- [Monorepo Roadmap](docs/ROADMAP.md) — Architectural enhancements and roadmap tracking.
+- [Supported Hardware & Connection Guide](docs/SUPPORTED_HARDWARE.md) — Tested printer models, driverless USB (`udev` rules), RS-232, and cash drawer pins.
 

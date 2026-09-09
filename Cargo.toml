@@ -15,6 +15,7 @@ members = [
     ".",
     "crates/papermint-node",
     "crates/papermint-daemon",
+    "crates/papermint-mobile",
 ]
 
 [features]

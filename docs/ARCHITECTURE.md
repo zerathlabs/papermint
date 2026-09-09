@@ -75,7 +75,8 @@ Traditional receipt printing libraries directly emit ESC/POS bytes while constru
 1. **`papermint` (Root crate)**: The pure, blazing-fast Rust core library.
 2. **`crates/papermint-node`**: Native Node.js & TypeScript bindings compiled via N-API (`napi-rs`), giving web and electron apps native speed without Python or native build chains.
 3. **`crates/papermint-daemon`**: A lightweight HTTP REST daemon built on Tokio and Axum, allowing web applications, mobile devices, and browser POS systems to print via simple JSON HTTP POST requests.
-4. **`benches/`**: Criterion microbenchmark suite ensuring zero regressions across releases.
+4. **`crates/papermint-mobile`**: C-ABI static and dynamic library (`libpapermint_mobile`) for React Native TurboModules, Expo SDK 56+ Inline Modules, Flutter, iOS, and Android.
+5. **`benches/`**: Criterion microbenchmark suite ensuring zero regressions across releases.
 
 ---
 
