@@ -1,40 +1,45 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: papermint
+description: The GOAT thermal receipt printing library for Rust, Node.js & Mobile.
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
-  image:
-    file: ../../assets/houston.webp
+  tagline: The GOAT thermal receipt printing library. Multi-vendor, multi-transport, CJK-aware, and blazingly fast in Rust, Node.js & Mobile.
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: Get Started
+      link: /getting-started/quickstart/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+      variant: primary
+    - text: Why papermint?
+      link: /getting-started/introduction/
+      icon: open-book
+      variant: secondary
+    - text: View on GitHub
+      link: https://github.com/zerathlabs/papermint
       icon: external
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+## Why choose papermint?
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
-	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
+  <Card title="⚡ Microsecond Encoding" icon="rocket">
+    Zero-allocation hot paths and pure Rust performance. Format 50-item restaurant receipts with barcodes and logos in ~10 microseconds.
+  </Card>
+  <Card title="📐 Typographic Precision" icon="pencil">
+    Built on Unicode East Asian Width (UAX #11). Asian characters (CJK), emojis, and Latin letters align to the exact monospace dot without table distortion.
+  </Card>
+  <Card title="🖨️ Multi-Vendor Dialects" icon="laptop">
+    Epson ESC/POS and StarPRNT Line Mode out of the box. Build your receipt once, print across Epson, Star, Bixolon, Citizen, and generic printers.
+  </Card>
+  <Card title="🔌 Driverless Transports" icon="puzzle">
+    Print over Async TCP (Port 9100), pure user-space driverless USB (`nusb`), RS-232 serial, or Bluetooth Classic (SPP) without vendor drivers or sudo.
+  </Card>
+  <Card title="📱 Mobile & Cloud Ecosystem" icon="star">
+    First-class Node.js/TypeScript N-API bindings, lightweight HTTP REST print daemon (`papermintd`), and C-ABI for Expo SDK 56+ Inline Modules.
+  </Card>
+  <Card title="🛡️ Hardware Protection" icon="shield">
+    Automatic 960-dot image chunking to prevent volatile thermal RAM overflows, plus Floyd-Steinberg and Atkinson dithering algorithms.
+  </Card>
 </CardGrid>

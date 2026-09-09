@@ -1,4 +1,4 @@
-.PHONY: help test check clippy doc fmt bench bench-check clean example
+.PHONY: help test check clippy doc fmt bench bench-check clean example docs-dev docs-build
 
 help:
 	@echo "papermint — The GOAT Thermal Printing Library"
@@ -12,6 +12,8 @@ help:
 	@echo "  make bench       - Run Criterion performance microbenchmarks"
 	@echo "  make bench-check - Fast sanity check of benchmark harness"
 	@echo "  make example     - Run the restaurant bill example"
+	@echo "  make docs-dev    - Start local Astro Starlight docs development server"
+	@echo "  make docs-build  - Build production static documentation website"
 	@echo "  make clean       - Clean target build artifacts"
 
 test:
@@ -37,6 +39,12 @@ bench-check:
 
 example:
 	cargo run --example restaurant_bill
+
+docs-dev:
+	cd web && pnpm dev
+
+docs-build:
+	cd web && pnpm run build
 
 clean:
 	cargo clean

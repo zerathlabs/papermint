@@ -4,21 +4,44 @@ import starlight from '@astrojs/starlight';
 
 // https://astro.build/config
 export default defineConfig({
+	site: 'https://papermint.dev',
 	integrations: [
 		starlight({
-			title: 'My Docs',
-			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/withastro/starlight' }],
+			title: '🌿 papermint',
+			description: 'The GOAT thermal receipt printing library for Rust, Node.js & Mobile',
+			social: [
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/zerathlabs/papermint' },
+			],
 			sidebar: [
 				{
-					label: 'Guides',
+					label: 'Getting Started',
 					items: [
-						// Each item here is one entry in the navigation menu.
-						{ label: 'Example Guide', slug: 'guides/example' },
+						{ label: 'Introduction', slug: 'getting-started/introduction' },
+						{ label: 'Quickstart Guide', slug: 'getting-started/quickstart' },
 					],
 				},
 				{
-					label: 'Reference',
-					items: [{ autogenerate: { directory: 'reference' } }],
+					label: 'Architecture & Design',
+					items: [
+						{ label: 'Core Architecture', slug: 'architecture/overview' },
+						{ label: 'Hardware Protocols', slug: 'architecture/protocols' },
+						{ label: 'Supported Hardware', slug: 'architecture/printers' },
+					],
+				},
+				{
+					label: 'Platforms & Ecosystem',
+					items: [
+						{ label: 'Node.js & TypeScript', slug: 'platforms/nodejs' },
+						{ label: 'Mobile (Expo & React Native)', slug: 'platforms/mobile' },
+						{ label: 'Print Daemon (HTTP REST)', slug: 'platforms/daemon' },
+					],
+				},
+				{
+					label: 'API References',
+					items: [
+						{ label: 'Daemon REST API', slug: 'reference/daemon-api' },
+						{ label: 'C-ABI Header (papermint.h)', slug: 'reference/c-abi' },
+					],
 				},
 			],
 		}),
