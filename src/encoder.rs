@@ -74,4 +74,3 @@ impl Encoder<crate::dialect::star::Star> {
         Self::new(crate::dialect::star::Star::new())
     }
 }
-

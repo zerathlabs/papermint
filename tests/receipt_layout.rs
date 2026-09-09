@@ -36,7 +36,10 @@ async fn test_receipt_builder_and_mock_printer() {
     assert!(cmd_count > 15);
 
     // Print receipt through mock printer
-    printer.print(&receipt).await.expect("printing should succeed");
+    printer
+        .print(&receipt)
+        .await
+        .expect("printing should succeed");
 
     let bytes = printer.transport().bytes();
     assert!(!bytes.is_empty());
@@ -86,7 +89,12 @@ fn test_receipt_table_row_and_word_wrapping() {
         .table_row(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns)
         .divider('-')
         .table_row(
-            &["2x", "Double Truffle Wagyu Smash Burger with Caramelized Onions", "$12.00", "$24.00"],
+            &[
+                "2x",
+                "Double Truffle Wagyu Smash Burger with Caramelized Onions",
+                "$12.00",
+                "$24.00",
+            ],
             &columns,
         )
         .table_row(&["1x", "Mint Cooler", "$3.50", "$3.50"], &columns);
@@ -154,5 +162,3 @@ fn test_receipt_stateful_columns_and_row_builder() {
     assert!(all_text.contains("$24.00"));
     assert!(all_text.contains("Mint Cooler"));
 }
-
-

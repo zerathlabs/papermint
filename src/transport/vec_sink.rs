@@ -35,12 +35,18 @@ impl VecSink {
     /// Returns a copy of all bytes written so far.
     #[must_use]
     pub fn bytes(&self) -> Vec<u8> {
-        self.buffer.lock().unwrap_or_else(|e| e.into_inner()).clone()
+        self.buffer
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clone()
     }
 
     /// Clears the recorded bytes buffer.
     pub fn clear(&self) {
-        self.buffer.lock().unwrap_or_else(|e| e.into_inner()).clear();
+        self.buffer
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .clear();
     }
 
     /// Returns the total number of bytes written so far.
@@ -81,4 +87,3 @@ impl Transport for VecSink {
         Ok(to_read)
     }
 }
-

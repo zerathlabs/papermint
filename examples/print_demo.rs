@@ -5,9 +5,9 @@
 //! Then run this example:
 //!   `cargo run --example print_demo`
 
+use papermint::{PaperWidth, Printer, Receipt};
 use std::net::SocketAddr;
 use std::time::Duration;
-use papermint::{PaperWidth, Printer, Receipt};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -50,7 +50,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .with_connect_timeout(Duration::from_millis(500))
         .with_write_timeout(Duration::from_millis(500));
     let mut printer = Printer::new(papermint::EscPos::new(), transport);
-    
+
     match printer.print(&receipt).await {
         Ok(()) => {
             println!("✅ Receipt sent successfully to virtual printer!");
@@ -62,7 +62,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let mut mock_printer = Printer::escpos_mock();
             mock_printer.print(&receipt).await?;
             let bytes = mock_printer.transport().bytes();
-            println!("✅ In-memory mock captured {} bytes successfully!", bytes.len());
+            println!(
+                "✅ In-memory mock captured {} bytes successfully!",
+                bytes.len()
+            );
             println!("Preview:\n{}", String::from_utf8_lossy(&bytes));
         }
     }

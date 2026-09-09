@@ -5,7 +5,9 @@ use std::time::Duration;
 use async_trait::async_trait;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::time::timeout;
-pub use tokio_serial::{DataBits, FlowControl, Parity, SerialPortBuilderExt, SerialStream, StopBits};
+pub use tokio_serial::{
+    DataBits, FlowControl, Parity, SerialPortBuilderExt, SerialStream, StopBits,
+};
 
 use crate::error::{PapermintError, Result};
 use crate::transport::Transport;
@@ -221,10 +223,7 @@ impl Transport for SerialTransport {
         match timeout(self.read_timeout, stream.read(buf)).await {
             Ok(Ok(n)) => Ok(n),
             Ok(Err(e)) => Err(PapermintError::Io(e)),
-            Err(_) => Err(PapermintError::Timeout(
-                self.read_timeout.as_millis() as u64
-            )),
+            Err(_) => Err(PapermintError::Timeout(self.read_timeout.as_millis() as u64)),
         }
     }
 }
-

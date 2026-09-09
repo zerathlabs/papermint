@@ -11,7 +11,7 @@
 //! Or fast sanity check with:
 //!   `cargo bench --bench receipt_benchmarks -- --test`
 
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use criterion::{Criterion, black_box, criterion_group, criterion_main};
 use papermint::{Alignment, Encoder, PaperWidth, Receipt, TableColumn};
 
 fn bench_receipt_builder(c: &mut Criterion) {
@@ -127,7 +127,7 @@ fn bench_dialects_encoding(c: &mut Criterion) {
 
 #[cfg(feature = "image")]
 fn bench_image_dithering(c: &mut Criterion) {
-    use papermint::image::{dither_dynamic_image, DitherMode};
+    use papermint::image::{DitherMode, dither_dynamic_image};
 
     // Create a 384x200 continuous horizontal grayscale gradient
     let mut gray = ::image::GrayImage::new(384, 200);
@@ -163,4 +163,3 @@ criterion_group!(
 );
 
 criterion_main!(benches);
-

@@ -54,7 +54,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let bytes = printer.transport().bytes();
     println!("✅ Generated {} bytes of kitchen ticket data.", bytes.len());
-    println!("\nPreview of rendered text:\n{}", String::from_utf8_lossy(&bytes));
+    println!(
+        "\nPreview of rendered text:\n{}",
+        String::from_utf8_lossy(&bytes)
+    );
 
     Ok(())
 }

@@ -103,4 +103,3 @@ impl From<u8> for InternationalCharset {
         }
     }
 }
-

@@ -32,10 +32,7 @@ fn test_escpos_print_density_wire_bytes() {
     // HighContrast -> 6 (+6, ~130%)
     buf.clear();
     escpos
-        .encode(
-            &Command::PrintDensity(PrintDensity::HighContrast),
-            &mut buf,
-        )
+        .encode(&Command::PrintDensity(PrintDensity::HighContrast), &mut buf)
         .unwrap();
     assert_eq!(buf, vec![0x1D, 0x28, 0x4B, 0x02, 0x00, 0x30, 6]);
 
@@ -100,11 +97,8 @@ fn test_star_print_density_wire_bytes() {
 
     // HighContrast -> b'5'
     buf.clear();
-    star.encode(
-        &Command::PrintDensity(PrintDensity::HighContrast),
-        &mut buf,
-    )
-    .unwrap();
+    star.encode(&Command::PrintDensity(PrintDensity::HighContrast), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x1D, 0x23, 0x30, b'5', 0x0A, 0x00]);
 
     // Custom(b'2')
@@ -197,4 +191,3 @@ async fn test_fluent_receipt_print_with_density_star() {
     // Verify ESC GS # '0' '5' LF NUL (density high contrast)
     assert_eq!(&bytes[2..9], &[0x1B, 0x1D, 0x23, 0x30, b'5', 0x0A, 0x00]);
 }
-

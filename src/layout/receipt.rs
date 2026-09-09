@@ -7,7 +7,7 @@ use crate::command::{
     HeatingParameters, ImageData, PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
 };
 use crate::layout::column::{
-    format_table_row, format_three_column, format_two_column, PaperWidth, TableColumn,
+    PaperWidth, TableColumn, format_table_row, format_three_column, format_two_column,
 };
 
 /// A fluent receipt document builder that generates a [`Vec<Command>`].
@@ -375,7 +375,11 @@ impl Receipt {
     #[cfg(feature = "image")]
     pub fn image_from_path(self, path: impl AsRef<std::path::Path>) -> crate::error::Result<Self> {
         let max_w = self.paper_width.dots();
-        self.image_from_path_with_options(path, Some(max_w), crate::image::DitherMode::FloydSteinberg)
+        self.image_from_path_with_options(
+            path,
+            Some(max_w),
+            crate::image::DitherMode::FloydSteinberg,
+        )
     }
 
     /// Loads an image file from disk with custom `max_width` and [`crate::image::DitherMode`].
@@ -403,7 +407,11 @@ impl Receipt {
     #[cfg(feature = "image")]
     pub fn image_from_bytes(self, bytes: &[u8]) -> crate::error::Result<Self> {
         let max_w = self.paper_width.dots();
-        self.image_from_bytes_with_options(bytes, Some(max_w), crate::image::DitherMode::FloydSteinberg)
+        self.image_from_bytes_with_options(
+            bytes,
+            Some(max_w),
+            crate::image::DitherMode::FloydSteinberg,
+        )
     }
 
     /// Decodes an image from in-memory bytes with custom `max_width` and [`crate::image::DitherMode`].
@@ -495,7 +503,8 @@ impl Receipt {
     /// to provide localized national currency and accented character symbols.
     #[must_use]
     pub fn international_charset(mut self, charset: impl Into<InternationalCharset>) -> Self {
-        self.commands.push(Command::InternationalCharset(charset.into()));
+        self.commands
+            .push(Command::InternationalCharset(charset.into()));
         self
     }
 

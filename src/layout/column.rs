@@ -99,12 +99,7 @@ pub fn format_two_column(left: &str, right: &str, total_width: usize) -> String 
 
 /// Formats a three-column row (e.g. Qty on left, Item in center, Price on right).
 #[must_use]
-pub fn format_three_column(
-    left: &str,
-    center: &str,
-    right: &str,
-    total_width: usize,
-) -> String {
+pub fn format_three_column(left: &str, center: &str, right: &str, total_width: usize) -> String {
     let left_count = str_display_width(left);
     let center_count = str_display_width(center);
     let right_count = str_display_width(right);
@@ -222,7 +217,12 @@ pub fn resolve_column_widths(columns: &[TableColumn], total_width: usize) -> Vec
         }
         if new_sum < total_width {
             let remainder = total_width - new_sum;
-            if let Some(max_idx) = widths.iter().enumerate().max_by_key(|&(_, w)| w).map(|(i, _)| i) {
+            if let Some(max_idx) = widths
+                .iter()
+                .enumerate()
+                .max_by_key(|&(_, w)| w)
+                .map(|(i, _)| i)
+            {
                 widths[max_idx] += remainder;
             }
         }
@@ -254,13 +254,24 @@ pub fn resolve_column_widths(columns: &[TableColumn], total_width: usize) -> Vec
             .filter(|(_, c)| matches!(c.width, ColumnWidth::Fraction(_)))
             .max_by_key(|(i, _)| widths[*i])
             .map(|(i, _)| i)
-            .or_else(|| widths.iter().enumerate().max_by_key(|&(_, w)| w).map(|(i, _)| i))
+            .or_else(|| {
+                widths
+                    .iter()
+                    .enumerate()
+                    .max_by_key(|&(_, w)| w)
+                    .map(|(i, _)| i)
+            })
         {
             widths[target_idx] += remainder;
         }
     } else if total_allocated > total_width {
         let excess = total_allocated - total_width;
-        if let Some(target_idx) = widths.iter().enumerate().max_by_key(|&(_, w)| w).map(|(i, _)| i) {
+        if let Some(target_idx) = widths
+            .iter()
+            .enumerate()
+            .max_by_key(|&(_, w)| w)
+            .map(|(i, _)| i)
+        {
             widths[target_idx] = widths[target_idx].saturating_sub(excess);
         }
     }
@@ -353,7 +364,11 @@ pub fn wrap_text_to_width(text: &str, max_width: usize) -> Vec<String> {
 ///
 /// Returns a sequence of physical formatted lines to be emitted to the printer.
 #[must_use]
-pub fn format_table_row(cells: &[&str], columns: &[TableColumn], total_width: usize) -> Vec<String> {
+pub fn format_table_row(
+    cells: &[&str],
+    columns: &[TableColumn],
+    total_width: usize,
+) -> Vec<String> {
     let widths = resolve_column_widths(columns, total_width);
     if widths.is_empty() {
         return Vec::new();
@@ -537,5 +552,3 @@ mod tests {
         }
     }
 }
-
-

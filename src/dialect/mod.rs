@@ -49,4 +49,3 @@ pub trait Dialect: Send + Sync {
     /// sequence cannot be parsed or is malformed.
     fn parse_status_response(&self, bytes: &[u8]) -> Result<PrinterStatus>;
 }
-

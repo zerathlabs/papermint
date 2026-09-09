@@ -348,9 +348,84 @@ for printer in usb_printers {
 
 ---
 
+### 9. Node.js & TypeScript Bindings (`@zerathlabs/papermint`)
+
+High-performance native N-API bindings allow your TypeScript POS and backend services to format receipts and stream to hardware with zero runtime serialization lag:
+
+```bash
+pnpm add @zerathlabs/papermint
+```
+
+```typescript
+import { Receipt, Printer } from '@zerathlabs/papermint';
+
+const receipt = new Receipt('80mm')
+  .init()
+  .center()
+  .bold(true)
+  .textLn('MINT BISTRO')
+  .bold(false)
+  .divider('=')
+  .tableHeader(
+    ['QTY', 'DESCRIPTION', 'PRICE', 'TOTAL'],
+    [
+      { widthFixed: 4, align: 'left' },
+      { widthFraction: 0.50, align: 'left' },
+      { widthFraction: 0.22, align: 'right' },
+      { widthFraction: 0.24, align: 'right' },
+    ]
+  )
+  .row(['2x', 'Truffle Wagyu Burger with Caramelized Onions', '$14.50', '$29.00'])
+  .row(['1x', 'Wood-Fired Margherita Pizza', '$18.00', '$18.00'])
+  .divider('-')
+  .twoColumn('TOTAL DUE:', '$47.00')
+  .qr('https://pay.mintbistro.com/bill/1042')
+  .cutFull();
+
+// Print over TCP network to thermal printer:
+const printer = Printer.tcp('192.168.1.100:9100', 'escpos');
+await printer.print(receipt);
+
+// Or encode directly to a Node Buffer:
+const rawBuffer = receipt.encode('escpos');
+```
+
+---
+
+### 10. Native Print Daemon (`papermintd`)
+
+`papermintd` is a standalone, high-concurrency HTTP sidecar service powered by Axum and Tokio for local POS ticket streaming:
+
+```bash
+cargo run -p papermint-daemon -- --port 8080
+```
+
+Send print jobs via simple HTTP POST:
+```bash
+curl -X POST http://127.0.0.1:8080/api/print \
+  -H "Content-Type: application/json" \
+  -d '{
+    "target": { "type": "tcp", "address": "192.168.1.100:9100" },
+    "dialect": "escpos",
+    "ticket": {
+      "title": "MINT BISTRO",
+      "items": [
+        { "qty": "1x", "description": "Truffle Smash Burger", "total": "$14.50" }
+      ],
+      "totals": [
+        { "label": "TOTAL:", "value": "$14.50" }
+      ],
+      "cut_mode": "full"
+    }
+  }'
+```
+
+---
+
 ## Documentation & Guides
 
 - [Hardware & Protocol Specification](docs/HARDWARE_COMMUNICATION.md) — Wire byte sequences, electrical drawer pulses, and QR symbology.
 - [Architecture & Internal Design](docs/ARCHITECTURE.md) — 3-layer architecture, atomic state tracking, and Unicode column mathematics.
 - [Supported Hardware Guide](docs/SUPPORTED_HARDWARE.md) — Tested printer brands, models, and DIP switch emulation configuration.
+- [Monorepo Roadmap](docs/ROADMAP.md) — Architectural enhancements and roadmap tracking.
 

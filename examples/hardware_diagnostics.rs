@@ -10,11 +10,11 @@
 //! Run with:
 //!   `cargo run --example hardware_diagnostics --all-features`
 
-use papermint::{CoverStatus, DrawerStatus, PaperStatus, Printer, PrinterStatus};
 #[cfg(feature = "serial")]
 use papermint::SerialTransport;
 #[cfg(feature = "usb")]
 use papermint::UsbTransport;
+use papermint::{CoverStatus, DrawerStatus, PaperStatus, Printer, PrinterStatus};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -89,7 +89,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Wire byte 0x12 represents: Ready, Paper OK, Cover Closed, Drawer Closed, Normal Temp
     let ready_response = [0x12];
     let mut printer = Printer::escpos_mock();
-    printer.transport().set_read_response(ready_response.to_vec());
+    printer
+        .transport()
+        .set_read_response(ready_response.to_vec());
 
     let status = printer.query_status().await?;
     print_diagnostic_report("PRINTER-01 (Primary Counter)", &status);
@@ -97,7 +99,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Now simulate an issue scenario: Paper Near-End + Cash Drawer Open
     // ESC/POS DLE EOT 1 status byte: bit 2 (0x04) = drawer open, bit 5/6 = paper near-end
     let warning_response = [0x12 | 0x04 | 0x20];
-    printer.transport().set_read_response(warning_response.to_vec());
+    printer
+        .transport()
+        .set_read_response(warning_response.to_vec());
 
     let warning_status = printer.query_status().await?;
     print_diagnostic_report("PRINTER-02 (Drive-Thru)", &warning_status);

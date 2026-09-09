@@ -8,49 +8,70 @@ fn test_escpos_international_charset_wire_bytes() {
     // ESC R 0 -> USA
     let mut buf = Vec::new();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::Usa), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::Usa),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x00]);
 
     // ESC R 1 -> France
     buf.clear();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::France), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::France),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x01]);
 
     // ESC R 2 -> Germany
     buf.clear();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::Germany), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::Germany),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x02]);
 
     // ESC R 3 -> UK
     buf.clear();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::Uk), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::Uk),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x03]);
 
     // ESC R 7 -> Spain I
     buf.clear();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::SpainI), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::SpainI),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x07]);
 
     // ESC R 8 -> Japan
     buf.clear();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::Japan), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::Japan),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x08]);
 
     // ESC R 17 -> Arabia
     buf.clear();
     escpos
-        .encode(&papermint::Command::InternationalCharset(InternationalCharset::Arabia), &mut buf)
+        .encode(
+            &papermint::Command::InternationalCharset(InternationalCharset::Arabia),
+            &mut buf,
+        )
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x11]);
 }
@@ -61,13 +82,19 @@ fn test_star_international_charset_wire_bytes() {
 
     // Star also uses ESC R n
     let mut buf = Vec::new();
-    star.encode(&papermint::Command::InternationalCharset(InternationalCharset::Uk), &mut buf)
-        .unwrap();
+    star.encode(
+        &papermint::Command::InternationalCharset(InternationalCharset::Uk),
+        &mut buf,
+    )
+    .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x03]);
 
     buf.clear();
-    star.encode(&papermint::Command::InternationalCharset(InternationalCharset::Germany), &mut buf)
-        .unwrap();
+    star.encode(
+        &papermint::Command::InternationalCharset(InternationalCharset::Germany),
+        &mut buf,
+    )
+    .unwrap();
     assert_eq!(buf, vec![0x1B, 0x52, 0x02]);
 }
 
@@ -77,22 +104,30 @@ fn test_escpos_codepage_wire_bytes() {
 
     // ESC t 16 -> WPC1252
     let mut buf = Vec::new();
-    escpos.encode(&papermint::Command::CodePage(CodePage::Wpc1252), &mut buf).unwrap();
+    escpos
+        .encode(&papermint::Command::CodePage(CodePage::Wpc1252), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x74, 16]);
 
     // ESC t 19 -> PC858 (Euro)
     buf.clear();
-    escpos.encode(&papermint::Command::CodePage(CodePage::Pc858), &mut buf).unwrap();
+    escpos
+        .encode(&papermint::Command::CodePage(CodePage::Pc858), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x74, 19]);
 
     // ESC t 50 -> WPC1256 (Arabic)
     buf.clear();
-    escpos.encode(&papermint::Command::CodePage(CodePage::Wpc1256), &mut buf).unwrap();
+    escpos
+        .encode(&papermint::Command::CodePage(CodePage::Wpc1256), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x74, 50]);
 
     // ESC t 17 -> PC866 (Cyrillic)
     buf.clear();
-    escpos.encode(&papermint::Command::CodePage(CodePage::Pc866), &mut buf).unwrap();
+    escpos
+        .encode(&papermint::Command::CodePage(CodePage::Pc866), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x74, 17]);
 }
 
@@ -103,17 +138,20 @@ fn test_star_codepage_wire_bytes() {
     // Star uses ESC GS t n (0x1B 0x1D 0x74 n)
     // WPC1252 in Star is table 32
     let mut buf = Vec::new();
-    star.encode(&papermint::Command::CodePage(CodePage::Wpc1252), &mut buf).unwrap();
+    star.encode(&papermint::Command::CodePage(CodePage::Wpc1252), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x1D, 0x74, 32]);
 
     // PC858 in Star is table 4
     buf.clear();
-    star.encode(&papermint::Command::CodePage(CodePage::Pc858), &mut buf).unwrap();
+    star.encode(&papermint::Command::CodePage(CodePage::Pc858), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x1D, 0x74, 4]);
 
     // PC850 in Star is table 0
     buf.clear();
-    star.encode(&papermint::Command::CodePage(CodePage::Pc850), &mut buf).unwrap();
+    star.encode(&papermint::Command::CodePage(CodePage::Pc850), &mut buf)
+        .unwrap();
     assert_eq!(buf, vec![0x1B, 0x1D, 0x74, 0]);
 }
 
@@ -139,8 +177,7 @@ fn test_wpc1252_single_byte_transcoding() {
         encoded,
         vec![
             b'C', b'a', b'f', 0xE9, // Café
-            b' ', b'1', b'2', b'.', b'5', b'0', b' ',
-            0x80 // Euro sign single byte!
+            b' ', b'1', b'2', b'.', b'5', b'0', b' ', 0x80 // Euro sign single byte!
         ]
     );
 }
@@ -198,6 +235,8 @@ async fn test_fluent_receipt_with_international_charset_and_codepage() {
 
     // Ensure NO raw 3-byte UTF-8 Euro bytes [0xE2, 0x82, 0xAC] leaked:
     let has_raw_utf8_euro = bytes.windows(3).any(|w| w == [0xE2, 0x82, 0xAC]);
-    assert!(!has_raw_utf8_euro, "Raw UTF-8 Euro bytes must not leak to printer");
+    assert!(
+        !has_raw_utf8_euro,
+        "Raw UTF-8 Euro bytes must not leak to printer"
+    );
 }
-

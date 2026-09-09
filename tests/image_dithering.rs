@@ -23,11 +23,7 @@ fn test_solid_white_image() {
 
 #[test]
 fn test_solid_black_image() {
-    let img = image::DynamicImage::ImageRgba8(ImageBuffer::from_pixel(
-        16,
-        8,
-        Rgba([0, 0, 0, 255]),
-    ));
+    let img = image::DynamicImage::ImageRgba8(ImageBuffer::from_pixel(16, 8, Rgba([0, 0, 0, 255])));
     let dithered = dither_dynamic_image(&img, None, DitherMode::FloydSteinberg);
 
     assert_eq!(dithered.width, 16);
@@ -40,11 +36,7 @@ fn test_solid_black_image() {
 #[test]
 fn test_transparent_pixels_treated_as_white_paper() {
     // Transparent pixels (A = 0) must be treated as blank paper (0x00), NOT black
-    let img = image::DynamicImage::ImageRgba8(ImageBuffer::from_pixel(
-        8,
-        8,
-        Rgba([0, 0, 0, 0]),
-    ));
+    let img = image::DynamicImage::ImageRgba8(ImageBuffer::from_pixel(8, 8, Rgba([0, 0, 0, 0])));
     let dithered = dither_dynamic_image(&img, None, DitherMode::FloydSteinberg);
 
     assert_eq!(dithered.width, 8);
@@ -85,11 +77,7 @@ fn test_floyd_steinberg_halftone_gradient() {
     ));
     let dithered = dither_dynamic_image(&img, None, DitherMode::FloydSteinberg);
 
-    let black_dots: u32 = dithered
-        .pixels
-        .iter()
-        .map(|b| b.count_ones())
-        .sum();
+    let black_dots: u32 = dithered.pixels.iter().map(|b| b.count_ones()).sum();
     let total_pixels = 32 * 32;
 
     // A 50% gray image should have approximately 50% black dots (±5% tolerance)
@@ -181,7 +169,9 @@ fn test_receipt_fluent_image_loading_and_encoding() {
         .expect("ESC/POS encoding failed");
     // Should contain GS v 0 raster bit image header: 0x1D, 0x76, 0x30, 0x00
     assert!(
-        escpos_bytes.windows(4).any(|w| w == [0x1D, 0x76, 0x30, 0x00]),
+        escpos_bytes
+            .windows(4)
+            .any(|w| w == [0x1D, 0x76, 0x30, 0x00]),
         "ESC/POS output must contain GS v 0 raster header"
     );
 

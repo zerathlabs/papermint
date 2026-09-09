@@ -37,8 +37,8 @@ pub use dialect::escpos::EscPos;
 #[cfg(feature = "star")]
 pub use dialect::star::Star;
 
-pub use layout::receipt::Receipt;
 pub use layout::column::{ColumnWidth, PaperWidth, TableColumn};
+pub use layout::receipt::Receipt;
 
 #[cfg(feature = "async")]
 pub use printer::Printer;

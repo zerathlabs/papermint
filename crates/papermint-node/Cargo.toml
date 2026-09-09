@@ -1,0 +1,26 @@
+[package]
+name = "papermint-node"
+version = "0.1.0"
+edition = "2024"
+description = "Node.js and TypeScript bindings for papermint thermal printing library"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[features]
+default = ["serial", "usb", "image"]
+serial = []
+usb = []
+image = []
+
+[dependencies]
+napi = { version = "3", default-features = false, features = ["napi4", "async"] }
+napi-derive = "3"
+papermint = { path = "../..", default-features = true, features = ["serial", "usb", "image"] }
+tokio = { version = "1", features = ["full"] }
+
+[build-dependencies]
+napi-build = "2"
+

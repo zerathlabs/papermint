@@ -19,8 +19,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("👨‍🍳 papermint — High-Urgency Kitchen Order Ticket (KOT) Demo\n");
 
     let item_columns = [
-        TableColumn::fixed(5, Alignment::Left),         // Qty (e.g. "2x  ")
-        TableColumn::fraction(1.0, Alignment::Left),   // Item & Special instructions
+        TableColumn::fixed(5, Alignment::Left), // Qty (e.g. "2x  ")
+        TableColumn::fraction(1.0, Alignment::Left), // Item & Special instructions
     ];
 
     let kot = Receipt::new(PaperWidth::Mm80)
@@ -105,4 +105,3 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-

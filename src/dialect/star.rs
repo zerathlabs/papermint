@@ -1,12 +1,12 @@
 //! Star Micronics (StarPRNT / Line Mode) dialect implementation.
 
-use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::RwLock;
+use std::sync::atomic::{AtomicU8, Ordering};
 
 use crate::codepage::CodePage;
 use crate::command::{
-    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily,
-    ImageData, PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
+    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
+    PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
 };
 use crate::dialect::Dialect;
 use crate::error::{PapermintError, Result};
@@ -154,9 +154,13 @@ impl Star {
         }
 
         let width_bytes = img.width.div_ceil(8) as usize;
-        let expected_len = width_bytes.checked_mul(img.height as usize).ok_or_else(|| {
-            PapermintError::InvalidCommand("image dimensions cause integer overflow".to_string())
-        })?;
+        let expected_len = width_bytes
+            .checked_mul(img.height as usize)
+            .ok_or_else(|| {
+                PapermintError::InvalidCommand(
+                    "image dimensions cause integer overflow".to_string(),
+                )
+            })?;
 
         if img.pixels.len() < expected_len {
             return Err(PapermintError::InvalidCommand(format!(
@@ -422,7 +426,9 @@ impl Dialect for Star {
 
     fn parse_status_response(&self, bytes: &[u8]) -> Result<PrinterStatus> {
         if bytes.is_empty() {
-            return Err(PapermintError::Dialect("empty status response from Star printer".into()));
+            return Err(PapermintError::Dialect(
+                "empty status response from Star printer".into(),
+            ));
         }
 
         let mut status = PrinterStatus::default();
@@ -479,4 +485,3 @@ impl Dialect for Star {
         Ok(status)
     }
 }
-

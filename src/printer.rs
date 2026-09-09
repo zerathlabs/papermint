@@ -98,7 +98,6 @@ impl<D: Dialect, T: Transport> Printer<D, T> {
     }
 }
 
-
 #[cfg(all(feature = "escpos", feature = "tcp"))]
 impl Printer<crate::dialect::escpos::EscPos, crate::transport::tcp::TcpTransport> {
     /// Creates a new network printer using standard ESC/POS dialect connecting to the specified socket address.
@@ -212,4 +211,3 @@ impl Printer<crate::dialect::star::Star, crate::transport::usb::UsbTransport> {
         )
     }
 }
-

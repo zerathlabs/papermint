@@ -1,0 +1,23 @@
+{
+  "name": "@zerathlabs/papermint",
+  "version": "0.1.0",
+  "description": "High-performance Node.js & TypeScript bindings for papermint thermal printing library",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "napi": {
+    "binaryName": "papermint",
+    "triples": {
+      "default": true
+    }
+  },
+  "scripts": {
+    "build": "cargo build --release && node -e \"const fs=require('fs'),path=require('path'); const d=path.resolve('../../target/release'); const m={'linux':['libpapermint_node.so','papermint.linux-x64-gnu.node'],'win32':['papermint_node.dll','papermint.win32-x64-msvc.node'],'darwin':['libpapermint_node.dylib','papermint.darwin-' + process.arch + '.node']}[process.platform]; if(m&&fs.existsSync(path.join(d,m[0]))) fs.copyFileSync(path.join(d,m[0]), m[1]);\"",
+    "build:napi": "napi build --platform --release",
+    "test": "node test.mjs"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0"
+  },
+  "license": "MIT OR Apache-2.0"
+}
+

@@ -128,9 +128,9 @@ pub struct HeatingParameters {
 impl Default for HeatingParameters {
     fn default() -> Self {
         Self {
-            max_heating_dots: 7,   // 56 dots
-            heating_time: 80,      // 800 µs
-            heating_interval: 2,   // 20 µs
+            max_heating_dots: 7, // 56 dots
+            heating_time: 80,    // 800 µs
+            heating_interval: 2, // 20 µs
         }
     }
 }

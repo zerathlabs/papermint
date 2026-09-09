@@ -1,7 +1,5 @@
 use papermint::dialect::Dialect;
-use papermint::{
-    CoverStatus, DrawerStatus, EscPos, PaperStatus, Printer, Star,
-};
+use papermint::{CoverStatus, DrawerStatus, EscPos, PaperStatus, Printer, Star};
 
 #[test]
 fn test_escpos_normal_status_ready() {
@@ -9,7 +7,9 @@ fn test_escpos_normal_status_ready() {
     // 4 bytes: [DLE EOT 1, DLE EOT 2, DLE EOT 3, DLE EOT 4]
     // All zero flags: online, drawer closed, cover closed, no errors, paper adequate
     let bytes = [0x00, 0x00, 0x00, 0x00];
-    let status = escpos.parse_status_response(&bytes).expect("parsing status failed");
+    let status = escpos
+        .parse_status_response(&bytes)
+        .expect("parsing status failed");
 
     assert!(status.is_online);
     assert_eq!(status.cover, CoverStatus::Closed);
@@ -50,7 +50,10 @@ fn test_escpos_paper_near_end() {
     let status = escpos.parse_status_response(&bytes).unwrap();
 
     assert_eq!(status.paper, PaperStatus::NearEnd);
-    assert!(status.is_ready(), "near-end paper warning should still be ready to print");
+    assert!(
+        status.is_ready(),
+        "near-end paper warning should still be ready to print"
+    );
 }
 
 #[test]
@@ -110,7 +113,10 @@ async fn test_printer_query_status_roundtrip_escpos() {
     let mock_response = vec![0x04, 0x00, 0x00, 0x0C];
     printer.transport().set_read_response(mock_response);
 
-    let status = printer.query_status().await.expect("query_status should succeed");
+    let status = printer
+        .query_status()
+        .await
+        .expect("query_status should succeed");
 
     assert_eq!(status.drawer, DrawerStatus::Open);
     assert_eq!(status.paper, PaperStatus::NearEnd);
@@ -121,7 +127,9 @@ async fn test_printer_query_status_roundtrip_escpos() {
     let transmitted = printer.transport().bytes();
     assert_eq!(
         transmitted,
-        vec![0x10, 0x04, 0x01, 0x10, 0x04, 0x02, 0x10, 0x04, 0x03, 0x10, 0x04, 0x04]
+        vec![
+            0x10, 0x04, 0x01, 0x10, 0x04, 0x02, 0x10, 0x04, 0x03, 0x10, 0x04, 0x04
+        ]
     );
 }
 
@@ -132,7 +140,10 @@ async fn test_printer_query_status_roundtrip_star() {
     // Inject mock ENQ response: drawer open (0x04)
     printer.transport().set_read_response(vec![0x04]);
 
-    let status = printer.query_status().await.expect("query_status should succeed");
+    let status = printer
+        .query_status()
+        .await
+        .expect("query_status should succeed");
 
     assert_eq!(status.drawer, DrawerStatus::Open);
     assert_eq!(status.paper, PaperStatus::Adequate);
@@ -147,7 +158,9 @@ fn test_escpos_real_hardware_fixed_bits_idle_ready() {
     let escpos = EscPos::new();
     // Genuine Epson TM-T88 hardware idle state with fixed bits 1 & 4 (0x12 = 00010010b) set on all 4 bytes:
     let bytes = [0x12, 0x12, 0x12, 0x12];
-    let status = escpos.parse_status_response(&bytes).expect("parsing real hardware frame failed");
+    let status = escpos
+        .parse_status_response(&bytes)
+        .expect("parsing real hardware frame failed");
 
     assert!(status.is_online);
     assert_eq!(status.cover, CoverStatus::Closed);
@@ -205,14 +218,17 @@ async fn test_printer_query_status_tcp_fragmentation_reassembly() {
 
     let transport = FragmentedMockTransport {
         chunks: vec![
-            vec![0x12],                   // Packet 1: First byte arrives alone
+            vec![0x12],                    // Packet 1: First byte arrives alone
             vec![0x12, 0x12, 0x12 | 0x0C], // Packet 2: Remaining 3 bytes arrive (with paper near-end)
         ],
         chunk_idx: 0,
     };
 
     let mut printer = Printer::new(EscPos::new(), transport);
-    let status = printer.query_status().await.expect("query_status must reassemble fragmented packets");
+    let status = printer
+        .query_status()
+        .await
+        .expect("query_status must reassemble fragmented packets");
 
     assert!(status.is_online);
     assert_eq!(status.paper, PaperStatus::NearEnd);

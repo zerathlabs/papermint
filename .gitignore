@@ -19,3 +19,9 @@
 logs/
 
 temp/
+
+# Node & N-API build artifacts
+node_modules/
+*.node
+*.swp
+*.tmp

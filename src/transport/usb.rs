@@ -3,8 +3,8 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use nusb::transfer::{Buffer, Bulk, In, Out};
 use nusb::MaybeFuture;
+use nusb::transfer::{Buffer, Bulk, In, Out};
 use tokio::time::timeout;
 
 use crate::error::{PapermintError, Result};
@@ -259,7 +259,9 @@ impl UsbTransport {
             && let Ok(config) = device.active_configuration()
         {
             for iface in config.interfaces() {
-                let matches_target = self.interface_number.is_none_or(|n| n == iface.interface_number());
+                let matches_target = self
+                    .interface_number
+                    .is_none_or(|n| n == iface.interface_number());
                 if matches_target {
                     for alt in iface.alt_settings() {
                         if alt.class() == USB_CLASS_PRINTER || self.interface_number.is_some() {
@@ -282,22 +284,17 @@ impl UsbTransport {
         let out_addr = ep_out_addr.unwrap_or(0x01);
         let in_addr = ep_in_addr.unwrap_or(0x81);
 
-        let interface = device
-            .claim_interface(iface_num)
-            .wait()
-            .map_err(|e| {
-                PapermintError::Usb(format!(
-                    "failed to claim USB printer interface {iface_num}: {e}"
-                ))
-            })?;
+        let interface = device.claim_interface(iface_num).wait().map_err(|e| {
+            PapermintError::Usb(format!(
+                "failed to claim USB printer interface {iface_num}: {e}"
+            ))
+        })?;
 
-        let ep_out = interface
-            .endpoint::<Bulk, Out>(out_addr)
-            .map_err(|e| {
-                PapermintError::Usb(format!(
-                    "failed to claim bulk OUT endpoint 0x{out_addr:02X}: {e}"
-                ))
-            })?;
+        let ep_out = interface.endpoint::<Bulk, Out>(out_addr).map_err(|e| {
+            PapermintError::Usb(format!(
+                "failed to claim bulk OUT endpoint 0x{out_addr:02X}: {e}"
+            ))
+        })?;
 
         let ep_in = interface.endpoint::<Bulk, In>(in_addr).ok();
 
@@ -343,7 +340,7 @@ impl Transport for UsbTransport {
                 }
                 Err(_) => {
                     return Err(PapermintError::Timeout(
-                        self.write_timeout.as_millis() as u64,
+                        self.write_timeout.as_millis() as u64
                     ));
                 }
             }
@@ -363,7 +360,7 @@ impl Transport for UsbTransport {
                     }
                     Err(_) => {
                         return Err(PapermintError::Timeout(
-                            self.write_timeout.as_millis() as u64,
+                            self.write_timeout.as_millis() as u64
                         ));
                     }
                 }
@@ -386,16 +383,14 @@ impl Transport for UsbTransport {
 
         match timeout(self.read_timeout, ep_in.next_complete()).await {
             Ok(completion) => {
-                let response = completion.into_result().map_err(|e| {
-                    PapermintError::Usb(format!("USB bulk IN read failed: {e}"))
-                })?;
+                let response = completion
+                    .into_result()
+                    .map_err(|e| PapermintError::Usb(format!("USB bulk IN read failed: {e}")))?;
                 let n = response.len().min(buf.len());
                 buf[..n].copy_from_slice(&response[..n]);
                 Ok(n)
             }
-            Err(_) => Err(PapermintError::Timeout(
-                self.read_timeout.as_millis() as u64,
-            )),
+            Err(_) => Err(PapermintError::Timeout(self.read_timeout.as_millis() as u64)),
         }
     }
 }

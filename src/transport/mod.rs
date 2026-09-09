@@ -33,4 +33,3 @@ pub trait Transport: Send + Sync {
     /// Reads incoming bytes from the printer into `buf`, returning the number of bytes read.
     async fn read(&mut self, buf: &mut [u8]) -> Result<usize>;
 }
-

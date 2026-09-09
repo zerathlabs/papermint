@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-check:
+    name: Rust Check & Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: Cache Cargo Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Format Check
+        run: cargo fmt --check
+
+      - name: Clippy Linter
+        run: cargo clippy --workspace --all-features --tests --examples --benches -- -D warnings
+
+      - name: Run Test Suite
+        run: cargo test --workspace --all-features
+
+      - name: Verify Documentation
+        run: cargo doc --all-features --no-deps
+
+  node-bindings:
+    name: Node.js & TypeScript Bindings (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [20.x, 22.x]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Install Node Dependencies
+        working-directory: crates/papermint-node
+        run: pnpm install
+
+      - name: Build Native N-API Module
+        working-directory: crates/papermint-node
+        run: pnpm run build
+
+      - name: Run Node.js Tests
+        working-directory: crates/papermint-node
+        run: pnpm test
+

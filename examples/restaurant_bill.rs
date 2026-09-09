@@ -22,10 +22,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("🍽️  papermint — Restaurant Dining Bill & Guest Check Demo\n");
 
     let columns = [
-        TableColumn::fixed(4, Alignment::Left),          // Qty
-        TableColumn::fraction(0.50, Alignment::Left),   // Description
-        TableColumn::fraction(0.22, Alignment::Right),  // Unit Price
-        TableColumn::fraction(0.24, Alignment::Right),  // Total Price
+        TableColumn::fixed(4, Alignment::Left),        // Qty
+        TableColumn::fraction(0.50, Alignment::Left),  // Description
+        TableColumn::fraction(0.22, Alignment::Right), // Unit Price
+        TableColumn::fraction(0.24, Alignment::Right), // Total Price
     ];
 
     // Build the restaurant guest check receipt

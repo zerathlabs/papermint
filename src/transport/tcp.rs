@@ -72,7 +72,7 @@ impl TcpTransport {
             Err(_) => {
                 return Err(PapermintError::Timeout(
                     self.connect_timeout.as_millis() as u64
-                ))
+                ));
             }
         };
 
@@ -152,11 +152,8 @@ impl Transport for TcpTransport {
             }
             Err(_) => {
                 self.stream = None;
-                Err(PapermintError::Timeout(
-                    self.read_timeout.as_millis() as u64,
-                ))
+                Err(PapermintError::Timeout(self.read_timeout.as_millis() as u64))
             }
         }
     }
 }
-

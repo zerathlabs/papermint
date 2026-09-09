@@ -1,12 +1,12 @@
 //! Standard Epson ESC/POS dialect implementation.
 
-use std::sync::atomic::{AtomicU8, Ordering};
 use std::sync::RwLock;
+use std::sync::atomic::{AtomicU8, Ordering};
 
 use crate::codepage::CodePage;
 use crate::command::{
-    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily,
-    ImageData, PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
+    Alignment, BarcodeData, BarcodeSystem, Command, CutMode, DrawerPin, FontFamily, ImageData,
+    PrintDensity, QrCorrectionLevel, QrData, UnderlineMode,
 };
 use crate::dialect::Dialect;
 use crate::error::{PapermintError, Result};
@@ -14,8 +14,8 @@ use crate::status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
 
 // Standard ESC/POS Control Characters
 const ESC: u8 = 0x1B; // 27 in decimal
-const GS:  u8 = 0x1D; // 29 in decimal
-const LF:  u8 = 0x0A; // 10 in decimal (Newline '\n')
+const GS: u8 = 0x1D; // 29 in decimal
+const LF: u8 = 0x0A; // 10 in decimal (Newline '\n')
 
 /// Standard Epson ESC/POS dialect encoder.
 ///
@@ -155,9 +155,13 @@ impl EscPos {
         }
 
         let width_bytes = img.width.div_ceil(8) as usize;
-        let expected_len = width_bytes.checked_mul(img.height as usize).ok_or_else(|| {
-            PapermintError::InvalidCommand("image dimensions cause integer overflow".to_string())
-        })?;
+        let expected_len = width_bytes
+            .checked_mul(img.height as usize)
+            .ok_or_else(|| {
+                PapermintError::InvalidCommand(
+                    "image dimensions cause integer overflow".to_string(),
+                )
+            })?;
 
         if img.pixels.len() < expected_len {
             return Err(PapermintError::InvalidCommand(format!(
@@ -361,10 +365,10 @@ impl Dialect for EscPos {
             Command::PrintDensity(density) => {
                 // GS ( K pL pH fn m: Function 48 (fn = 48 / 0x30, pL = 2, pH = 0)
                 let m = match density {
-                    PrintDensity::Light => 253,       // -3 (~85%)
-                    PrintDensity::Normal => 0,        // 0 (100% standard calibration)
-                    PrintDensity::Dark => 3,          // +3 (~115%)
-                    PrintDensity::HighContrast => 6,  // +6 (~130%)
+                    PrintDensity::Light => 253,      // -3 (~85%)
+                    PrintDensity::Normal => 0,       // 0 (100% standard calibration)
+                    PrintDensity::Dark => 3,         // +3 (~115%)
+                    PrintDensity::HighContrast => 6, // +6 (~130%)
                     PrintDensity::Custom(val) => *val,
                 };
                 buf.extend_from_slice(&[GS, b'(', b'K', 0x02, 0x00, 0x30, m]);
@@ -398,10 +402,7 @@ impl Dialect for EscPos {
     fn status_query_command(&self) -> Vec<u8> {
         // DLE EOT 1 (Printer status) + DLE EOT 2 (Offline cause) + DLE EOT 3 (Error cause) + DLE EOT 4 (Paper sensor)
         vec![
-            0x10, 0x04, 0x01,
-            0x10, 0x04, 0x02,
-            0x10, 0x04, 0x03,
-            0x10, 0x04, 0x04,
+            0x10, 0x04, 0x01, 0x10, 0x04, 0x02, 0x10, 0x04, 0x03, 0x10, 0x04, 0x04,
         ]
     }
 
@@ -411,7 +412,9 @@ impl Dialect for EscPos {
 
     fn parse_status_response(&self, bytes: &[u8]) -> Result<PrinterStatus> {
         if bytes.is_empty() {
-            return Err(PapermintError::Dialect("empty status response from ESC/POS printer".into()));
+            return Err(PapermintError::Dialect(
+                "empty status response from ESC/POS printer".into(),
+            ));
         }
 
         let mut status = PrinterStatus::default();
@@ -475,4 +478,3 @@ impl Dialect for EscPos {
         Ok(status)
     }
 }
-
