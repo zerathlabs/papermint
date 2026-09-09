@@ -14,6 +14,12 @@ pub mod vec_sink;
 #[cfg(feature = "tcp")]
 pub mod tcp;
 
+#[cfg(feature = "serial")]
+pub mod serial;
+
+#[cfg(feature = "usb")]
+pub mod usb;
+
 /// Asynchronous transport interface for printer communication.
 #[cfg(feature = "async")]
 #[async_trait]

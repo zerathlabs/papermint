@@ -151,6 +151,8 @@ async fn test_my_receipt() {
 | `star` | **Yes** | StarPRNT / Star Line Mode dialect encoder |
 | `async` | **Yes** | Asynchronous traits and `Printer` orchestrator |
 | `tcp` | **Yes** | Tokio async TCP transport (`TcpTransport`) |
+| `serial` | No | Asynchronous serial RS-232 / COM port transport (`SerialTransport`) |
+| `usb` | No | Pure-Rust async USB Printer Class 07 transport (`UsbTransport`) |
 | `image` | No | PNG/JPEG decoding, aspect-ratio auto-scaling, and Floyd-Steinberg dithering |
 
 ### 3. Multi-Column Tables with Word-Wrapping
@@ -275,6 +277,51 @@ let receipt = Receipt::new(PaperWidth::Mm80)
     .text_ln("Crisp, High-Contrast Receipt")
     .feed(2)
     .cut_full();
+```
+
+### 8. Direct USB & Serial Hardware Transports
+
+Communicate with physical thermal receipt printers connected via USB or Serial RS-232 / Virtual COM ports:
+
+#### Serial / RS-232 Counter POS
+```rust
+use papermint::{Printer, Receipt, PaperWidth};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Connect over serial with automatic RTS/CTS hardware flow control:
+    let mut printer = Printer::escpos_serial("/dev/ttyUSB0", 19200);
+
+    let receipt = Receipt::new(PaperWidth::Mm80)
+        .init()
+        .text_ln("Serial Print Job")
+        .cut_full();
+
+    printer.print(&receipt).await?;
+    Ok(())
+}
+```
+
+#### USB Printer Class (Class 07)
+```rust
+use papermint::{Printer, Receipt, PaperWidth};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Target by Vendor ID & Product ID (e.g. Epson TM-T88VI):
+    let mut printer = Printer::escpos_usb(0x04B8, 0x0202);
+
+    // Or auto-discover the first attached USB printer:
+    // let mut printer = Printer::escpos_usb_auto();
+
+    let receipt = Receipt::new(PaperWidth::Mm80)
+        .init()
+        .text_ln("Direct USB Bulk Print Job")
+        .cut_full();
+
+    printer.print(&receipt).await?;
+    Ok(())
+}
 ```
 
 ---

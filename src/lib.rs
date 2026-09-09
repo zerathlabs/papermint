@@ -46,6 +46,12 @@ pub use printer::Printer;
 #[cfg(feature = "tcp")]
 pub use transport::tcp::TcpTransport;
 
+#[cfg(feature = "serial")]
+pub use transport::serial::SerialTransport;
+
+#[cfg(feature = "usb")]
+pub use transport::usb::UsbTransport;
+
 #[cfg(feature = "async")]
 pub use transport::vec_sink::VecSink;
 

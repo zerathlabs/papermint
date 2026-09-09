@@ -147,3 +147,69 @@ impl Printer<crate::dialect::star::Star, crate::transport::vec_sink::VecSink> {
     }
 }
 
+#[cfg(all(feature = "escpos", feature = "serial"))]
+impl Printer<crate::dialect::escpos::EscPos, crate::transport::serial::SerialTransport> {
+    /// Creates a new serial printer using standard ESC/POS dialect on the specified port.
+    #[must_use]
+    pub fn escpos_serial(port: impl Into<String>, baud_rate: u32) -> Self {
+        Self::new(
+            crate::dialect::escpos::EscPos::new(),
+            crate::transport::serial::SerialTransport::new(port, baud_rate),
+        )
+    }
+}
+
+#[cfg(all(feature = "star", feature = "serial"))]
+impl Printer<crate::dialect::star::Star, crate::transport::serial::SerialTransport> {
+    /// Creates a new serial printer using StarPRNT dialect on the specified port.
+    #[must_use]
+    pub fn star_serial(port: impl Into<String>, baud_rate: u32) -> Self {
+        Self::new(
+            crate::dialect::star::Star::new(),
+            crate::transport::serial::SerialTransport::new(port, baud_rate),
+        )
+    }
+}
+
+#[cfg(all(feature = "escpos", feature = "usb"))]
+impl Printer<crate::dialect::escpos::EscPos, crate::transport::usb::UsbTransport> {
+    /// Creates a new USB printer using standard ESC/POS dialect targeting the specified VID and PID.
+    #[must_use]
+    pub fn escpos_usb(vendor_id: u16, product_id: u16) -> Self {
+        Self::new(
+            crate::dialect::escpos::EscPos::new(),
+            crate::transport::usb::UsbTransport::from_vid_pid(vendor_id, product_id),
+        )
+    }
+
+    /// Creates a new USB printer using standard ESC/POS dialect auto-discovering the first attached USB printer.
+    #[must_use]
+    pub fn escpos_usb_auto() -> Self {
+        Self::new(
+            crate::dialect::escpos::EscPos::new(),
+            crate::transport::usb::UsbTransport::find_first_printer(),
+        )
+    }
+}
+
+#[cfg(all(feature = "star", feature = "usb"))]
+impl Printer<crate::dialect::star::Star, crate::transport::usb::UsbTransport> {
+    /// Creates a new USB printer using StarPRNT dialect targeting the specified VID and PID.
+    #[must_use]
+    pub fn star_usb(vendor_id: u16, product_id: u16) -> Self {
+        Self::new(
+            crate::dialect::star::Star::new(),
+            crate::transport::usb::UsbTransport::from_vid_pid(vendor_id, product_id),
+        )
+    }
+
+    /// Creates a new USB printer using StarPRNT dialect auto-discovering the first attached USB printer.
+    #[must_use]
+    pub fn star_usb_auto() -> Self {
+        Self::new(
+            crate::dialect::star::Star::new(),
+            crate::transport::usb::UsbTransport::find_first_printer(),
+        )
+    }
+}
+

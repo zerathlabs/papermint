@@ -337,6 +337,42 @@ Direct thermal mechanisms allow fine-grained strobe and pulse timing calibration
 - `n2` = Heating pulse duration in 10 µs increments (default `80` = 800 µs). Direct micro-resistor activation time.
 - `n3` = Heating interval between pulses in 10 µs increments (default `2` = 20 µs). Minimum thermal cooling interval before firing adjacent dots.
 
+---
+
+## 11. Direct Hardware Transports (USB & Serial/RS-232)
+
+### 11.1 Serial / RS-232 Communication
+
+Counter POS terminals and legacy retail devices frequently communicate over serial RS-232 (DB9 / RJ45) or virtual COM port USB-to-UART bridges (FTDI, Prolific, CH340, Silicon Labs CP2102).
+
+#### Baud Rates & Framing:
+- Typical thermal printer baud rates: `9600`, `19200` (Epson TM-T88 default), `38400` (Star default), or `115200`.
+- Standard framing: 8 data bits, no parity, 1 stop bit (`8N1`).
+
+#### Hardware Flow Control (RTS/CTS):
+Thermal printers maintain small internal receive buffers (typically 4 KB). When printing complex graphics, long receipts, or high-density barcodes at high baud rates, host transmitters can easily overrun the printer buffer unless flow control is enabled:
+- **Hardware Handshaking (RTS/CTS)**: The printer signals buffer saturation over CTS/RTS hardware lines.
+- **Recommendation**: Always enable `.flow_control_hardware()` when connecting over high-speed serial.
+
+### 11.2 USB Printer Class (Class 07) Communication
+
+USB thermal receipt printers implement standard **USB Device Class Definition for Printing Devices (Class 07, SubClass 01)**.
+
+#### Endpoint Topology:
+- **Interface**: Class `0x07` (Printer), SubClass `0x01` (Printer), Protocol `0x01` (Unidirectional), `0x02` (Bidirectional), or `0x03` (1284.4).
+- **Bulk OUT Endpoint**: (Address typically `0x01` or `0x02`): Primary data pipeline used for transmitting raster graphics, line feeds, and POS commands.
+- **Bulk IN Endpoint**: (Address typically `0x81` or `0x82`): Used for receiving real-time status telemetry (`DLE EOT` / `ENQ` responses) and device ID queries.
+
+#### Common Vendor ID (VID) and Product ID (PID) References:
+| Manufacturer | Vendor ID (VID) | Common Product ID (PID) | Models |
+| :--- | :---: | :---: | :--- |
+| **Epson** | `0x04B8` | `0x0202` | TM-T88IV, TM-T88V, TM-T88VI, TM-T20 |
+| **Star Micronics** | `0x0519` | `0x0001` / `0x0003` | TSP100, TSP650, TSP700 |
+| **Citizen** | `0x1D90` | `0x2060` | CT-S310, CT-S651 |
+| **Bixolon** | `0x1504` | `0x0006` | SRP-350, SRP-330 |
+| **Xprinter / Generic** | `0x0416` / `0x1FC9` | `0x5011` / `0x2016` | XP-58, XP-80 |
+
+
 
 
 

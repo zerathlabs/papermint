@@ -38,6 +38,18 @@ pub enum PapermintError {
     #[cfg(feature = "image")]
     #[error("image error: {0}")]
     Image(#[from] ::image::ImageError),
+
+    /// A requested USB or serial printer device was not found.
+    #[error("device not found: {0}")]
+    DeviceNotFound(String),
+
+    /// A serial port communication error.
+    #[error("serial error: {0}")]
+    Serial(String),
+
+    /// A USB communication error.
+    #[error("usb error: {0}")]
+    Usb(String),
 }
 
 /// Convenience alias used throughout the crate.
