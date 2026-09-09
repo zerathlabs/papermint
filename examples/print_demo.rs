@@ -1,8 +1,6 @@
-//! Example showing how to format and send a receipt to the mock printer server.
+//! Example showing how to format and send a receipt to a network or mock printer.
 //!
-//! Run the mock server in one terminal:
-//!   `node ../../scripts/mock-thermal-printer.mjs`
-//! Then run this example:
+//! Run this example:
 //!   `cargo run --example print_demo`
 
 use papermint::{PaperWidth, Printer, Receipt};
@@ -56,8 +54,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("✅ Receipt sent successfully to virtual printer!");
         }
         Err(e) => {
-            println!("⚠️ Virtual printer not connected at {target_addr}: {e}");
-            println!("💡 Start the mock printer with: make mock");
+            println!("⚠️ Network printer not connected at {target_addr}: {e}");
             println!("\nFallback: Testing via in-memory mock (VecSink)...");
             let mut mock_printer = Printer::escpos_mock();
             mock_printer.print(&receipt).await?;

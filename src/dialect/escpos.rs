@@ -1,4 +1,8 @@
 //! Standard Epson ESC/POS dialect implementation.
+//!
+//! Converts abstract [`Command`] variants into standard ESC/POS byte sequences.
+//! State like character dimensions (double width/height) is maintained atomically
+//! so that [`Dialect::encode`] can remain concurrent and thread-safe.
 
 use std::sync::RwLock;
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -12,10 +16,12 @@ use crate::dialect::Dialect;
 use crate::error::{PapermintError, Result};
 use crate::status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
 
-// Standard ESC/POS Control Characters
-const ESC: u8 = 0x1B; // 27 in decimal
-const GS: u8 = 0x1D; // 29 in decimal
-const LF: u8 = 0x0A; // 10 in decimal (Newline '\n')
+// Standard ESC/POS ASCII Control Characters
+const LF: u8 = 0x0A; // Line Feed (Newline '\n')
+const DLE: u8 = 0x10; // Data Link Escape (Real-time status transmission DLE EOT)
+const EOT: u8 = 0x04; // End of Transmission (Real-time status transmission DLE EOT)
+const ESC: u8 = 0x1B; // Escape (Lead byte for standard printer commands)
+const GS: u8 = 0x1D; // Group Separator (Lead byte for advanced POS commands)
 
 /// Standard Epson ESC/POS dialect encoder.
 ///
@@ -49,6 +55,11 @@ impl EscPos {
     }
 
     /// Encodes a 1D barcode into ESC/POS Function B commands (`GS h`, `GS w`, `GS k`).
+    ///
+    /// # Byte Sequences
+    /// - Height: `GS h n` (`1D 68 n`) where 1 <= n <= 255
+    /// - Width:  `GS w n` (`1D 77 n`) where 2 <= n <= 6
+    /// - Data:   `GS k m n d1..dk` (`1D 6B m n d1..dk`) (Function B format)
     fn encode_barcode(&self, data: &BarcodeData, buf: &mut Vec<u8>) -> Result<()> {
         let payload = data.data.as_bytes();
 
@@ -101,7 +112,14 @@ impl EscPos {
         Ok(())
     }
 
-    /// Encodes a 2D QR code using standard Epson 5-step sequence (`GS ( k ...`).
+    /// Encodes a 2D QR code using the standard Epson 5-step sequence (`GS ( k ...`).
+    ///
+    /// # Byte Sequences
+    /// 1. Select Model (Function 165): `GS ( k 4 0 49 65 n1 n2` (`1D 28 6B 04 00 31 41 n1 n2`)
+    /// 2. Set Module Size (Function 167): `GS ( k 3 0 49 67 n` (`1D 28 6B 03 00 31 43 n`)
+    /// 3. Set Error Correction (Function 169): `GS ( k 3 0 49 69 n` (`1D 28 6B 03 00 31 45 n`)
+    /// 4. Store Data in Buffer (Function 180): `GS ( k pL pH 49 80 48 d1..dk` (`1D 28 6B pL pH 31 50 30 d1..dk`)
+    /// 5. Print Stored Symbol (Function 181): `GS ( k 3 0 49 81 48` (`1D 28 6B 03 00 31 51 30`)
     fn encode_qr(&self, data: &QrData, buf: &mut Vec<u8>) -> Result<()> {
         let payload = data.data.as_bytes();
         let payload_len = payload.len();
@@ -149,6 +167,16 @@ impl EscPos {
     }
 
     /// Encodes a monochrome 1-bit-per-pixel raster bitmap image (`GS v 0`).
+    ///
+    /// # Byte Sequence
+    /// - `GS v 0 m xL xH yL yH d1..dk` (`1D 76 30 m xL xH yL yH d1..dk`)
+    ///   - `m`: Raster mode (0 = Normal, 1 = Double-width, 2 = Double-height, 3 = Quadruple)
+    ///   - `xL, xH`: Number of bytes in horizontal direction (`(width + 7) / 8`)
+    ///   - `yL, yH`: Number of dots in vertical direction (`height`)
+    ///
+    /// # Chunking Rationale
+    /// Slices images taller than 960 dots into consecutive `GS v 0` blocks to prevent
+    /// buffer overflows in thermal printer volatile RAM (typically 4KB–64KB).
     fn encode_image(&self, img: &ImageData, buf: &mut Vec<u8>) -> Result<()> {
         if img.width == 0 || img.height == 0 {
             return Ok(());
@@ -413,11 +441,16 @@ impl Dialect for EscPos {
         Ok(())
     }
 
+    /// Generates real-time status inquiry commands (`DLE EOT n`).
+    ///
+    /// Transmits a 4-request burst to poll complete hardware state:
+    /// - `DLE EOT 1`: Transmit printer status (`10 04 01`) - Drawer kick-out and online status
+    /// - `DLE EOT 2`: Transmit offline status (`10 04 02`) - Cover status and paper feed button
+    /// - `DLE EOT 3`: Transmit error status (`10 04 03`) - Auto-cutter error and head overheat
+    /// - `DLE EOT 4`: Transmit paper roll sensor status (`10 04 04`) - Paper near-end and paper-end
     fn status_query_command(&self) -> Vec<u8> {
-        // DLE EOT 1 (Printer status) + DLE EOT 2 (Offline cause) + DLE EOT 3 (Error cause) + DLE EOT 4 (Paper sensor)
-        vec![
-            0x10, 0x04, 0x01, 0x10, 0x04, 0x02, 0x10, 0x04, 0x03, 0x10, 0x04, 0x04,
-        ]
+        // DLE EOT 1 (Printer) + DLE EOT 2 (Offline) + DLE EOT 3 (Error) + DLE EOT 4 (Paper)
+        vec![DLE, EOT, 1, DLE, EOT, 2, DLE, EOT, 3, DLE, EOT, 4]
     }
 
     fn expected_status_bytes(&self) -> usize {

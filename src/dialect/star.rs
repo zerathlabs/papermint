@@ -1,4 +1,7 @@
 //! Star Micronics (StarPRNT / Line Mode) dialect implementation.
+//!
+//! Translates abstract [`Command`] variants into Star Micronics command codes
+//! supported by the TSP100, TSP650, TSP700, and mC-Print series.
 
 use std::sync::RwLock;
 use std::sync::atomic::{AtomicU8, Ordering};
@@ -13,10 +16,13 @@ use crate::error::{PapermintError, Result};
 use crate::status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
 
 // Standard Star Control Characters
-const ESC: u8 = 0x1B;
-const GS: u8 = 0x1D;
-const RS: u8 = 0x1E;
-const LF: u8 = 0x0A;
+const ENQ: u8 = 0x05; // Enquiry (Star real-time status inquiry)
+const BEL: u8 = 0x07; // Bell (Buzzer trigger / Drawer circuit 1 pulse)
+const LF: u8 = 0x0A; // Line Feed (Newline '\n')
+const ESC: u8 = 0x1B; // Escape (Standard Star lead byte)
+const FS: u8 = 0x1C; // File Separator (Drawer circuit 2 pulse)
+const GS: u8 = 0x1D; // Group Separator (Lead byte for 2D barcode / cut)
+const RS: u8 = 0x1E; // Record Separator (1D barcode terminator)
 
 /// Star Micronics dialect encoder (StarPRNT / Line Mode).
 ///
@@ -50,6 +56,17 @@ impl Star {
     }
 
     /// Encodes a 1D barcode using Star command: `ESC b <type> <text_pos> <width> <height> <data> RS`.
+    ///
+    /// # Byte Sequence
+    /// - `ESC b n1 n2 n3 n4 d1...dk RS` (`1B 62 n1 n2 n3 n4 ... 1E`)
+    ///   - `n1`: Barcode type (0=UPC-E, 1=UPC-A, 2=EAN-8, 3=EAN-13, 4=CODE 39, 5=ITF, 6=CODE 128, 7=CODE 93, 8=NW-7)
+    ///   - `n2`: Under-barcode text position (1=None, 2=Under, 3=Under with feed)
+    ///   - `n3`: Module width (1=Small, 2=Medium, 3=Large)
+    ///   - `n4`: Height in dots (1–255)
+    ///   - `RS`: End of barcode data delimiter (`0x1E`)
+    ///
+    /// # Reference
+    /// - StarPRNT Line Mode Command Reference: Barcode (ESC b)
     fn encode_barcode(&self, data: &BarcodeData, buf: &mut Vec<u8>) -> Result<()> {
         let payload = data.data.as_bytes();
 
@@ -107,6 +124,16 @@ impl Star {
     }
 
     /// Encodes a 2D QR code using the Star 5-step sequence: `ESC GS y S ...`.
+    ///
+    /// # Byte Sequences
+    /// 1. Set Model: `ESC GS y S 0 n` (`1B 1D 79 53 30 n`) where n = 1 (Model 1) or 2 (Model 2)
+    /// 2. Set Error Correction: `ESC GS y S 1 n` (`1B 1D 79 53 31 n`) where 0 = L, 1 = M, 2 = Q, 3 = H
+    /// 3. Set Cell Size: `ESC GS y S 2 n` (`1B 1D 79 53 32 n`) where 1 <= n <= 8 dots
+    /// 4. Store Data: `ESC GS y D 1 0 pL pH d1...dk` (`1B 1D 79 44 31 00 pL pH ...`)
+    /// 5. Print Stored Symbol: `ESC GS y P` (`1B 1D 79 50`)
+    ///
+    /// # Reference
+    /// - StarPRNT Line Mode Command Reference: 2D Barcode (QR Code)
     fn encode_qr(&self, data: &QrData, buf: &mut Vec<u8>) -> Result<()> {
         let payload = data.data.as_bytes();
         let payload_len = payload.len();
@@ -148,6 +175,14 @@ impl Star {
     }
 
     /// Encodes a monochrome 1-bit-per-pixel raster bitmap image using StarPRNT Raster Mode.
+    ///
+    /// # Byte Sequences
+    /// 1. Enter raster mode: `ESC * r A` (`1B 2A 72 41`)
+    /// 2. Transfer raster line with feed: `ESC * r b n1 n2 d1...dk` (`1B 2A 72 62 n1 n2 ...`)
+    /// 3. Quit raster mode: `ESC * r B` (`1B 2A 72 42`)
+    ///
+    /// # Reference
+    /// - StarPRNT Command Reference: Raster Graphics Mode
     fn encode_image(&self, img: &ImageData, buf: &mut Vec<u8>) -> Result<()> {
         if img.width == 0 || img.height == 0 {
             return Ok(());
@@ -314,15 +349,15 @@ impl Dialect for Star {
             Command::DrawerKick(pin) => {
                 match pin {
                     // Drive circuit 1 (Pin 2): ESC BEL n1 n2 BEL
-                    DrawerPin::Pin2 => buf.extend_from_slice(&[ESC, 0x07, 11, 55, 0x07]),
+                    DrawerPin::Pin2 => buf.extend_from_slice(&[ESC, BEL, 11, 55, BEL]),
                     // Drive circuit 2 (Pin 5): ESC FS n1 n2 FS
-                    DrawerPin::Pin5 => buf.extend_from_slice(&[ESC, 0x1C, 11, 55, 0x1C]),
+                    DrawerPin::Pin5 => buf.extend_from_slice(&[ESC, FS, 11, 55, FS]),
                 }
             }
 
             Command::Beep { .. } => {
                 // ESC BEL (Hardware buzzer trigger)
-                buf.extend_from_slice(&[ESC, 0x07]);
+                buf.extend_from_slice(&[ESC, BEL]);
             }
 
             Command::LineSpacing(spacing) => match spacing {
@@ -415,9 +450,17 @@ impl Dialect for Star {
         Ok(())
     }
 
+    /// Generates the Star Micronics real-time status inquiry command (`ENQ`).
+    ///
+    /// # Byte Sequence
+    /// - `ENQ` (`0x05`): Inquires single-byte real-time status from the printer.
+    ///   Multi-byte ASB (Auto Status Back) frames are also parsed transparently in [`Dialect::parse_status_response`].
+    ///
+    /// # Reference
+    /// - StarPRNT Line Mode Command Reference: Status inquiry (ENQ / ASB)
     fn status_query_command(&self) -> Vec<u8> {
         // ENQ (0x05): Star real-time status inquiry
-        vec![0x05]
+        vec![ENQ]
     }
 
     fn expected_status_bytes(&self) -> usize {
