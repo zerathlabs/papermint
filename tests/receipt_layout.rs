@@ -109,3 +109,50 @@ fn test_receipt_table_row_and_word_wrapping() {
     assert!(all_text.contains("Mint Cooler"));
 }
 
+#[test]
+fn test_receipt_stateful_columns_and_row_builder() {
+    use papermint::{Alignment, Command, TableColumn};
+
+    let columns = [
+        TableColumn::fixed(4, Alignment::Left),
+        TableColumn::fraction(0.50, Alignment::Left),
+        TableColumn::fraction(0.25, Alignment::Right),
+        TableColumn::fraction(0.25, Alignment::Right),
+    ];
+
+    let receipt = Receipt::new(PaperWidth::Mm80)
+        .init()
+        .table_header(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns)
+        .divider('-')
+        .row(&[
+            "2x",
+            "Double Truffle Wagyu Smash Burger with Caramelized Onions",
+            "$12.00",
+            "$24.00",
+        ])
+        .row(&["1x", "Mint Cooler", "$3.50", "$3.50"]);
+
+    assert_eq!(receipt.active_columns(), Some(&columns[..]));
+    let receipt_cleared = receipt.clone().clear_columns();
+    assert_eq!(receipt_cleared.active_columns(), None);
+
+    let cmds = receipt.commands();
+    // Verify bold commands surround table_header
+    assert_eq!(cmds[1], Command::Bold(true));
+    assert!(cmds.contains(&Command::Bold(false)));
+
+    let mut all_text = String::new();
+    for cmd in cmds {
+        if let Command::Text(s) = cmd {
+            all_text.push_str(s);
+        }
+    }
+
+    assert!(all_text.contains("QTY"));
+    assert!(all_text.contains("Double Truffle"));
+    assert!(all_text.contains("Caramelized Onions"));
+    assert!(all_text.contains("$24.00"));
+    assert!(all_text.contains("Mint Cooler"));
+}
+
+

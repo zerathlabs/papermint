@@ -59,7 +59,53 @@ impl std::fmt::Debug for UsbTransport {
     }
 }
 
+/// Discovered USB printer metadata from system enumeration.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct UsbPrinterInfo {
+    /// USB Vendor ID.
+    pub vendor_id: u16,
+    /// USB Product ID.
+    pub product_id: u16,
+    /// Device serial number string, if provided by the device.
+    pub serial_number: Option<String>,
+    /// Manufacturer name string, if provided.
+    pub manufacturer: Option<String>,
+    /// Product name string, if provided.
+    pub product_name: Option<String>,
+    /// Discovered interface number for printing.
+    pub interface_number: u8,
+}
+
 impl UsbTransport {
+    /// Enumerates and returns all attached USB devices matching the USB Printer Class (`0x07`).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PapermintError::Usb`] if USB device enumeration fails.
+    pub fn list_printers() -> Result<Vec<UsbPrinterInfo>> {
+        let devices = nusb::list_devices()
+            .wait()
+            .map_err(|e| PapermintError::Usb(format!("failed to enumerate USB devices: {e}")))?;
+
+        let mut printers = Vec::new();
+        for dev in devices {
+            for iface in dev.interfaces() {
+                if iface.class() == USB_CLASS_PRINTER {
+                    printers.push(UsbPrinterInfo {
+                        vendor_id: dev.vendor_id(),
+                        product_id: dev.product_id(),
+                        serial_number: dev.serial_number().map(String::from),
+                        manufacturer: dev.manufacturer_string().map(String::from),
+                        product_name: dev.product_string().map(String::from),
+                        interface_number: iface.interface_number(),
+                    });
+                    break;
+                }
+            }
+        }
+        Ok(printers)
+    }
+
     /// Creates a new USB transport targeting the given Vendor ID (VID) and Product ID (PID).
     ///
     /// # Example

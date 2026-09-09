@@ -39,10 +39,11 @@ use crate::layout::column::{
 ///
 /// assert!(!receipt.commands().is_empty());
 /// ```
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Receipt {
     paper_width: PaperWidth,
     commands: Vec<Command>,
+    active_columns: Option<Vec<TableColumn>>,
 }
 
 impl Default for Receipt {
@@ -58,6 +59,7 @@ impl Receipt {
         Self {
             paper_width,
             commands: Vec::with_capacity(32),
+            active_columns: None,
         }
     }
 
@@ -256,6 +258,69 @@ impl Receipt {
             self = self.table_row(row, columns);
         }
         self
+    }
+
+    /// Configures the active table columns for subsequent calls to [`.row(...)`](Self::row)
+    /// or [`.header(...)`](Self::header).
+    #[must_use]
+    pub fn set_columns(mut self, columns: &[TableColumn]) -> Self {
+        self.active_columns = Some(columns.to_vec());
+        self
+    }
+
+    /// Configures the active table columns and prints a bold table header row.
+    ///
+    /// Subsequent calls to [`.row(...)`](Self::row) will automatically format against
+    /// these columns without needing to re-specify the column slice on every row.
+    #[must_use]
+    pub fn table_header<S: AsRef<str>>(mut self, headers: &[S], columns: &[TableColumn]) -> Self {
+        self.active_columns = Some(columns.to_vec());
+        self = self.bold(true).table_row(headers, columns).bold(false);
+        self
+    }
+
+    /// Prints a bold header row using the currently configured active columns.
+    #[must_use]
+    pub fn header<S: AsRef<str>>(mut self, headers: &[S]) -> Self {
+        self = self.bold(true).row(headers).bold(false);
+        self
+    }
+
+    /// Returns a slice of the active table columns, if configured.
+    #[must_use]
+    pub fn active_columns(&self) -> Option<&[TableColumn]> {
+        self.active_columns.as_deref()
+    }
+
+    /// Clears any active table columns configured on this receipt builder.
+    #[must_use]
+    pub fn clear_columns(mut self) -> Self {
+        self.active_columns = None;
+        self
+    }
+
+    /// Prints an N-column table row using the active table columns configured via
+    /// [`.table_header(...)`](Self::table_header) or [`.set_columns(...)`](Self::set_columns).
+    ///
+    /// Long cell text wraps automatically at word boundaries while synchronizing
+    /// multi-line heights across adjacent columns.
+    #[must_use]
+    pub fn row<S: AsRef<str>>(mut self, cells: &[S]) -> Self {
+        if let Some(ref cols) = self.active_columns {
+            let str_cells: Vec<&str> = cells.iter().map(|s| s.as_ref()).collect();
+            let lines = format_table_row(&str_cells, cols, self.columns());
+            for line in lines {
+                self = self.text_ln(line);
+            }
+            self
+        } else {
+            let joined = cells
+                .iter()
+                .map(|s| s.as_ref())
+                .collect::<Vec<_>>()
+                .join("  ");
+            self.text_ln(joined)
+        }
     }
 
     /// Prints a barcode with full custom parameters.

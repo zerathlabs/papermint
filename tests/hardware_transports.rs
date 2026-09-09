@@ -90,6 +90,26 @@ async fn test_usb_transport_connect_nonexistent_device() {
     }
 }
 
+#[cfg(feature = "serial")]
+#[test]
+fn test_serial_available_ports() {
+    let ports = SerialTransport::available_ports();
+    // On systems with serial ports, returns a list of port names (e.g. /dev/ttyS0, COM1)
+    if let Ok(p) = ports {
+        println!("Detected serial ports: {p:?}");
+    }
+}
+
+#[cfg(feature = "usb")]
+#[test]
+fn test_usb_list_printers() {
+    let printers = UsbTransport::list_printers();
+    // On systems with USB subsystems, returns a list of UsbPrinterInfo
+    if let Ok(p) = printers {
+        println!("Detected USB printers: {p:?}");
+    }
+}
+
 #[cfg(all(feature = "escpos", feature = "star", feature = "serial"))]
 #[test]
 fn test_printer_serial_constructors() {

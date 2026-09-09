@@ -50,7 +50,7 @@ pub use transport::tcp::TcpTransport;
 pub use transport::serial::SerialTransport;
 
 #[cfg(feature = "usb")]
-pub use transport::usb::UsbTransport;
+pub use transport::usb::{UsbPrinterInfo, UsbTransport};
 
 #[cfg(feature = "async")]
 pub use transport::vec_sink::VecSink;

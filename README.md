@@ -171,13 +171,15 @@ let columns = [
 
 let receipt = Receipt::new(PaperWidth::Mm80)
     .init()
-    .table_row(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns)
+    .table_header(&["QTY", "ITEM", "PRICE", "TOTAL"], &columns)
     .divider('-')
-    .table_row(
-        &["2x", "Double Truffle Wagyu Smash Burger with Caramelized Onions", "$12.50", "$25.00"],
-        &columns,
-    )
-    .table_row(&["1x", "Large Truffle Fries", "$5.50", "$5.50"], &columns)
+    .row(&[
+        "2x",
+        "Double Truffle Wagyu Smash Burger with Caramelized Onions",
+        "$12.50",
+        "$25.00",
+    ])
+    .row(&["1x", "Large Truffle Fries", "$5.50", "$5.50"])
     .divider('=')
     .two_column("TOTAL", "$30.50")
     .cut_full();
@@ -321,6 +323,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     printer.print(&receipt).await?;
     Ok(())
+}
+```
+
+#### Hardware Device Discovery & Port Enumeration
+```rust
+use papermint::{SerialTransport, UsbTransport};
+
+// Discover available serial COM ports (e.g. /dev/ttyUSB0, COM3):
+let serial_ports = SerialTransport::available_ports()?;
+for port in serial_ports {
+    println!("Found serial port: {port}");
+}
+
+// Discover attached USB printers (Vendor ID, Product ID, Serial, Manufacturer):
+let usb_printers = UsbTransport::list_printers()?;
+for printer in usb_printers {
+    println!(
+        "Found USB printer: VID={:#06x} PID={:#06x} ({:?})",
+        printer.vendor_id, printer.product_id, printer.product_name
+    );
 }
 ```
 

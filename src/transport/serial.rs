@@ -54,6 +54,18 @@ impl SerialTransport {
         }
     }
 
+    /// Returns a list of available serial/COM port names detected on the host system.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`PapermintError::Serial`] if serial port enumeration fails.
+    pub fn available_ports() -> Result<Vec<String>> {
+        let ports = tokio_serial::available_ports().map_err(|e| {
+            PapermintError::Serial(format!("failed to enumerate serial ports: {e}"))
+        })?;
+        Ok(ports.into_iter().map(|p| p.port_name).collect())
+    }
+
     /// Returns the configured port path.
     #[must_use]
     pub fn port_path(&self) -> &str {
