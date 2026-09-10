@@ -6,6 +6,7 @@ description = "The GOAT thermal printing library — multi-vendor, multi-transpo
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/zerathlabs/papermint"
+homepage = "https://papermint.zerathlabs.com"
 documentation = "https://docs.rs/papermint"
 keywords = ["escpos", "thermal-printer", "receipt", "pos", "printing"]
 categories = ["hardware-support", "encoding"]

@@ -2,8 +2,11 @@
 
 > A fast, multi-vendor, type-safe thermal receipt printing library for Rust.
 
-[![Crates.io](https://img.shields.io/badge/crates.io-papermint-orange)](https://crates.io)
-[![Documentation](https://docs.rs/papermint/badge.svg)](https://docs.rs/papermint)
+[![Crates.io](https://img.shields.io/crates/v/papermint.svg)](https://crates.io/crates/papermint)
+[![npm](https://img.shields.io/npm/v/papermint.svg)](https://www.npmjs.com/package/papermint)
+[![Documentation](https://img.shields.io/badge/docs-papermint.zerathlabs.com-388E3C)](https://papermint.zerathlabs.com)
+[![docs.rs](https://docs.rs/papermint/badge.svg)](https://docs.rs/papermint)
+[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](#license)
 
 ---
 
