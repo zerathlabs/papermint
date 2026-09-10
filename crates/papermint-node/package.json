@@ -1,6 +1,6 @@
 {
   "name": "papermint",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "High-performance Node.js & TypeScript bindings for papermint thermal printing library",
   "homepage": "https://papermint.zerathlabs.com",
   "repository": {
@@ -26,5 +26,21 @@
   "publishConfig": {
     "access": "public"
   },
+  "keywords": [
+    "escpos",
+    "thermal-printer",
+    "receipt-printer",
+    "pos",
+    "star-micronics",
+    "starprnt",
+    "usb-printer",
+    "napi-rs"
+  ],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "README.md",
+    "*.node"
+  ],
   "license": "MIT OR Apache-2.0"
 }

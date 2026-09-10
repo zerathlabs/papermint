@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1] - 2026-09-10
+
+### Added
+- Dedicated README documentation for `papermint-node`, `papermint-daemon`, and `papermint-mobile`.
+- Search keywords, repository, and homepage metadata for the `papermint` npm package.
+- Automated workspace version bumping target (`make bump V=...`) in Makefile.
+
 ## [0.1.0] - 2026-09-10
 
 ### Added
