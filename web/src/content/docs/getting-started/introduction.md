@@ -48,4 +48,4 @@ These legacy libraries share fundamental architectural flaws:
 1. **Universal Portability**: Write your receipt logic once. Render it on Epson ESC/POS, StarPRNT, or an in-memory mock sink for testing.
 2. **Typographic Monospace Precision**: Monospace column mathematics powered by **Unicode Standard Annex #11 (East Asian Width)** with synchronized multiline row wrapping.
 3. **Driverless USB**: Communicates directly with operating system USB bulk endpoints via `nusb` without vendor drivers or `sudo`.
-4. **Universal Ecosystem**: Use `papermint` in pure Rust, in Node.js/TypeScript via N-API (`@zerathlabs/papermint`), over HTTP via `papermintd`, or in mobile apps via Expo SDK 56+ Inline Modules.
+4. **Universal Ecosystem**: Use `papermint` in pure Rust, in Node.js/TypeScript via N-API (`papermint`), over HTTP via `papermintd`, or in mobile apps via Expo SDK 56+ Inline Modules.

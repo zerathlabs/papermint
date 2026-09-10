@@ -1,7 +1,7 @@
 import assert from 'node:assert';
 import { Receipt, Printer, availablePorts, listPrinters } from './index.js';
 
-console.log('🧪 Testing @zerathlabs/papermint Node.js/TypeScript Bindings...\n');
+console.log('🧪 Testing papermint Node.js/TypeScript Bindings...\n');
 
 // 1. Test Receipt Builder & Table Engine
 console.log('1. Testing fluent Receipt builder...');

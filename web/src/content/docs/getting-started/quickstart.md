@@ -68,18 +68,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ## 2. Using Node.js / TypeScript
 
-Install `@zerathlabs/papermint`:
+Install `papermint`:
 
 ```bash
-pnpm add @zerathlabs/papermint
+pnpm add papermint
 # or
-npm install @zerathlabs/papermint
+npm install papermint
 ```
 
 ### TypeScript Example
 
 ```typescript
-import { Receipt, Printer } from '@zerathlabs/papermint';
+import { Receipt, Printer } from 'papermint';
 
 const receipt = new Receipt('80mm')
   .init()

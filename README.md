@@ -349,16 +349,16 @@ for printer in usb_printers {
 
 ---
 
-### 9. Node.js & TypeScript Bindings (`@zerathlabs/papermint`)
+### 9. Node.js & TypeScript Bindings (`papermint`)
 
 High-performance native N-API bindings allow your TypeScript POS and backend services to format receipts and stream to hardware with zero runtime serialization lag:
 
 ```bash
-pnpm add @zerathlabs/papermint
+pnpm add papermint
 ```
 
 ```typescript
-import { Receipt, Printer } from '@zerathlabs/papermint';
+import { Receipt, Printer } from 'papermint';
 
 const receipt = new Receipt('80mm')
   .init()

@@ -1,5 +1,5 @@
 {
-  "name": "@zerathlabs/papermint",
+  "name": "papermint",
   "version": "0.1.0",
   "description": "High-performance Node.js & TypeScript bindings for papermint thermal printing library",
   "main": "index.js",
@@ -17,6 +17,9 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "^3.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "license": "MIT OR Apache-2.0"
 }

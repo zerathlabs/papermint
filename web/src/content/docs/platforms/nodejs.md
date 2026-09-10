@@ -1,11 +1,11 @@
 ---
 title: "Node.js & TypeScript"
-description: "Native N-API bindings for @zerathlabs/papermint"
+description: "Native N-API bindings for papermint"
 ---
 
 # 📦 Node.js & TypeScript Bindings
 
-`@zerathlabs/papermint` provides native, zero-overhead Node.js and TypeScript bindings for `papermint` compiled using **N-API (`napi-rs`)**.
+`papermint` provides native, zero-overhead Node.js and TypeScript bindings for `papermint` compiled using **N-API (`napi-rs`)**.
 
 It runs with native C++ speed directly in Node.js and Electron without requiring Python or native build chains.
 
@@ -14,9 +14,9 @@ It runs with native C++ speed directly in Node.js and Electron without requiring
 ## Installation
 
 ```bash
-pnpm add @zerathlabs/papermint
+pnpm add papermint
 # or
-npm install @zerathlabs/papermint
+npm install papermint
 ```
 
 ---
@@ -35,7 +35,7 @@ npm install @zerathlabs/papermint
 ### 1. Formatting a Receipt & Printing via TCP
 
 ```typescript
-import { Receipt, Printer } from '@zerathlabs/papermint';
+import { Receipt, Printer } from 'papermint';
 
 const receipt = new Receipt('80mm')
   .init()
@@ -66,7 +66,7 @@ await printer.print(receipt);
 ### 2. Device Auto-Discovery
 
 ```typescript
-import { availablePorts, listPrinters } from '@zerathlabs/papermint';
+import { availablePorts, listPrinters } from 'papermint';
 
 // 1. List USB thermal printers:
 const usbPrinters = listPrinters();
