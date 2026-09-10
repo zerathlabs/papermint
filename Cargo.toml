@@ -2,7 +2,7 @@
 name = "papermint"
 version = "0.1.0"
 edition = "2024"
-description = "The GOAT thermal printing library — multi-vendor, multi-transport, type-safe"
+description = "High-performance, type-safe thermal receipt printing for Rust, Node.js & Mobile"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 repository = "https://github.com/zerathlabs/papermint"

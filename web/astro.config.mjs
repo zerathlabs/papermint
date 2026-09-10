@@ -8,7 +8,7 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: '🌿 papermint',
-			description: 'The GOAT thermal receipt printing library for Rust, Node.js & Mobile',
+			description: 'High-performance, type-safe thermal receipt printing for Rust, Node.js & Mobile',
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/zerathlabs/papermint' },
 			],

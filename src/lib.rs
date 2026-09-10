@@ -1,4 +1,4 @@
-// papermint — The GOAT Thermal Printing Library
+// papermint — High-performance, type-safe thermal receipt printing for Rust, Node.js & Mobile.
 //
 // Three-layer architecture:
 //   Layer 3 (Layout)    → Receipt builder produces Vec<Command>

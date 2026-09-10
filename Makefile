@@ -1,7 +1,7 @@
 .PHONY: help test check clippy doc fmt bench bench-check clean example docs-dev docs-build bump
 
 help:
-	@echo "papermint — The GOAT Thermal Printing Library"
+	@echo "papermint — High-performance, type-safe thermal receipt printing"
 	@echo ""
 	@echo "Available make commands:"
 	@echo "  make test        - Run all unit and integration tests across workspace"
