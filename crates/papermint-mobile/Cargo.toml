@@ -3,7 +3,7 @@ name = "papermint-mobile"
 version = "0.1.1"
 edition = "2024"
 description = "C-ABI and mobile engine bindings for papermint (React Native, Expo, Flutter, iOS, Android)"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 
 [lib]
 crate-type = ["cdylib", "staticlib", "rlib"]

@@ -6,7 +6,7 @@
 [![npm](https://img.shields.io/npm/v/papermint.svg)](https://www.npmjs.com/package/papermint)
 [![Documentation](https://img.shields.io/badge/docs-papermint.zerathlabs.com-388E3C)](https://papermint.zerathlabs.com)
 [![docs.rs](https://docs.rs/papermint/badge.svg)](https://docs.rs/papermint)
-[![License](https://img.shields.io/badge/license-MIT%2FApache--2.0-blue.svg)](#license)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ---
 
@@ -433,4 +433,11 @@ curl -X POST http://127.0.0.1:8080/api/print \
 - [Print Daemon HTTP REST API](docs/DAEMON_API.md) — `papermintd` endpoints, JSON ticket schemas, and hardware sensor telemetry.
 - [Hardware & Protocol Specification](docs/HARDWARE_COMMUNICATION.md) — Wire byte sequences, electrical drawer pulses, and QR symbology.
 - [Supported Hardware & Connection Guide](docs/SUPPORTED_HARDWARE.md) — Tested printer models, driverless USB (`udev` rules), RS-232, and cash drawer pins.
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
 

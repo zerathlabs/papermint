@@ -3,7 +3,7 @@ name = "papermint-node"
 version = "0.1.1"
 edition = "2024"
 description = "Node.js and TypeScript bindings for papermint thermal printing library"
-license = "MIT OR Apache-2.0"
+license = "MIT"
 publish = false
 
 [lib]

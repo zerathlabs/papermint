@@ -125,4 +125,4 @@ Comprehensive guides, API specifications, and multi-platform tutorials are avail
 
 ## License
 
-Dual-licensed under [MIT OR Apache-2.0](https://github.com/zerathlabs/papermint).
+Licensed under [MIT](https://github.com/zerathlabs/papermint/blob/main/LICENSE).
