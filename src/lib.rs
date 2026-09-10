@@ -15,6 +15,7 @@ pub mod status;
 pub mod dialect;
 
 pub mod layout;
+pub mod tax;
 
 #[cfg(feature = "async")]
 pub mod transport;
@@ -30,6 +31,7 @@ pub use command::*;
 pub use encoder::Encoder;
 pub use error::PapermintError;
 pub use status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
+pub use tax::{ZatcaInvoice, base64_encode, encode_zatca_tlv, zatca_qr_base64};
 
 #[cfg(feature = "escpos")]
 pub use dialect::escpos::EscPos;
@@ -38,6 +40,7 @@ pub use dialect::escpos::EscPos;
 pub use dialect::star::Star;
 
 pub use layout::column::{ColumnWidth, PaperWidth, TableColumn};
+pub use layout::preview::{render_html, render_svg};
 pub use layout::receipt::Receipt;
 
 #[cfg(feature = "async")]

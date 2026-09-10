@@ -9,7 +9,7 @@ use tokio::sync::Mutex;
 
 use papermint::{
     Alignment, ColumnWidth, CoverStatus, DrawerStatus, Encoder, EscPos, PaperStatus, PaperWidth,
-    Printer, Receipt, Star, TableColumn,
+    Printer, Receipt, Star, TableColumn, ZatcaInvoice,
 };
 
 #[cfg(feature = "serial")]
@@ -26,6 +26,21 @@ pub struct TableColumnOptions {
     pub width_fraction: Option<f64>,
     /// Text alignment: "left", "center", or "right".
     pub align: Option<String>,
+}
+
+/// ZATCA (Saudi Arabia) & FTA (UAE) compliant invoice metadata for E-Invoicing QR codes.
+#[napi(object)]
+pub struct JsZatcaInvoice {
+    /// Seller's legal or commercial trading name (Tag 1).
+    pub seller_name: String,
+    /// Tax Registration Number (TRN / VAT number, typically 15 digits) (Tag 2).
+    pub vat_number: String,
+    /// Invoice timestamp in ISO 8601 format (Tag 3, e.g. "2026-09-10T14:30:00Z").
+    pub timestamp: String,
+    /// Invoice total amount including VAT (Tag 4, e.g. "115.00").
+    pub total_amount: String,
+    /// Total VAT amount (Tag 5, e.g. "15.00").
+    pub vat_amount: String,
 }
 
 /// A receipt builder for thermal printers.
@@ -251,6 +266,20 @@ impl JsReceipt {
         self
     }
 
+    /// Appends a ZATCA (Saudi Arabia) & FTA (UAE) compliant E-Invoicing QR code.
+    #[napi]
+    pub fn zatca_qr(&mut self, invoice: JsZatcaInvoice) -> &Self {
+        let inv = ZatcaInvoice::new(
+            invoice.seller_name,
+            invoice.vat_number,
+            invoice.timestamp,
+            invoice.total_amount,
+            invoice.vat_amount,
+        );
+        self.inner = std::mem::take(&mut self.inner).zatca_qr(&inv);
+        self
+    }
+
     /// Prints a Code128 barcode.
     #[napi]
     pub fn barcode_128(&mut self, content: String) -> &Self {
@@ -274,6 +303,18 @@ impl JsReceipt {
         self
     }
 
+    /// Renders a virtual SVG vector graphic preview of the receipt.
+    #[napi]
+    pub fn render_svg(&self) -> String {
+        self.inner.render_svg()
+    }
+
+    /// Renders a responsive, styled HTML component snippet preview of the receipt.
+    #[napi]
+    pub fn render_html(&self) -> String {
+        self.inner.render_html()
+    }
+
     /// Encodes receipt commands into raw binary wire bytes for the given dialect.
     ///
     /// @param dialect - "escpos" (default) or "star".
@@ -290,6 +331,19 @@ impl JsReceipt {
         };
         Ok(Buffer::from(bytes))
     }
+}
+
+/// Generates a ZATCA (Saudi Arabia) & FTA (UAE) compliant Base64 QR payload string from invoice metadata.
+#[napi]
+pub fn zatca_qr_base64(
+    seller_name: String,
+    vat_number: String,
+    timestamp: String,
+    total_amount: String,
+    vat_amount: String,
+) -> String {
+    let inv = ZatcaInvoice::new(seller_name, vat_number, timestamp, total_amount, vat_amount);
+    inv.to_qr_base64()
 }
 
 fn parse_columns(cols: &[TableColumnOptions]) -> Vec<TableColumn> {

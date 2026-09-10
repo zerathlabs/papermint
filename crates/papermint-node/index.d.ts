@@ -81,12 +81,18 @@ export declare class Receipt {
   clearColumns(): this
   /** Prints a QR code with the given content. */
   qr(content: string): this
+  /** Appends a ZATCA (Saudi Arabia) & FTA (UAE) compliant E-Invoicing QR code. */
+  zatcaQr(invoice: JsZatcaInvoice): this
   /** Prints a Code128 barcode. */
   barcode128(content: string): this
   /** Triggers acoustic buzzer alert. */
   beep(count?: number | undefined | null, duration?: number | undefined | null): this
   /** Triggers cash drawer kickout pin. */
   openDrawer(): this
+  /** Renders a virtual SVG vector graphic preview of the receipt. */
+  renderSvg(): string
+  /** Renders a responsive HTML component snippet preview of the receipt. */
+  renderHtml(): string
   /**
    * Encodes receipt commands into raw binary wire bytes for the given dialect.
    *
@@ -94,6 +100,7 @@ export declare class Receipt {
    */
   encode(dialect?: string | undefined | null): NapiResult<Buffer>
 }
+
 export type JsReceipt = Receipt
 
 /** Enumerates available serial / COM ports on the host system. */
@@ -131,3 +138,27 @@ export interface TableColumnOptions {
   /** Text alignment: "left", "center", or "right". */
   align?: string
 }
+
+/** ZATCA (Saudi Arabia) & FTA (UAE) compliant invoice metadata for E-Invoicing QR codes. */
+export interface JsZatcaInvoice {
+  /** Seller's legal or commercial trading name (Tag 1). */
+  sellerName: string
+  /** Tax Registration Number (TRN / VAT number, typically 15 digits) (Tag 2). */
+  vatNumber: string
+  /** Invoice timestamp in ISO 8601 format (Tag 3, e.g. "2026-09-10T14:30:00Z"). */
+  timestamp: string
+  /** Invoice total amount including VAT (Tag 4, e.g. "115.00"). */
+  totalAmount: string
+  /** Total VAT amount (Tag 5, e.g. "15.00"). */
+  vatAmount: string
+}
+
+/** Generates a ZATCA (Saudi Arabia) & FTA (UAE) compliant Base64 QR payload string from invoice metadata. */
+export declare function zatcaQrBase64(
+  sellerName: string,
+  vatNumber: string,
+  timestamp: string,
+  totalAmount: string,
+  vatAmount: string,
+): string
+

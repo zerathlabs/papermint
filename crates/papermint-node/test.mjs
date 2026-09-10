@@ -1,5 +1,7 @@
 import assert from 'node:assert';
-import { Receipt, Printer, availablePorts, listPrinters } from './index.js';
+import { Receipt, Printer, availablePorts, listPrinters, zatcaQrBase64 } from './index.js';
+
+
 
 console.log('🧪 Testing papermint Node.js/TypeScript Bindings...\n');
 
@@ -69,5 +71,58 @@ const usbPrinters = listPrinters();
 assert(Array.isArray(usbPrinters), 'listPrinters must return an array of devices');
 console.log(`   ✅ listPrinters returned ${usbPrinters.length} printer(s).`);
 
+// 5. Test ZATCA & UAE E-Invoicing Engine
+console.log('\n5. Testing ZATCA & UAE E-Invoicing QR engine...');
+const zatcaInvoice = {
+  sellerName: "Bob's Fashions",
+  vatNumber: '310122393500003',
+  timestamp: '2022-04-25T15:30:00Z',
+  totalAmount: '1000.00',
+  vatAmount: '150.00',
+};
+
+const base64Qr = zatcaQrBase64(
+  zatcaInvoice.sellerName,
+  zatcaInvoice.vatNumber,
+  zatcaInvoice.timestamp,
+  zatcaInvoice.totalAmount,
+  zatcaInvoice.vatAmount,
+);
+assert(typeof base64Qr === 'string', 'zatcaQrBase64 must return a string');
+assert(base64Qr.length > 0, 'Base64 QR payload cannot be empty');
+console.log(`   ✅ zatcaQrBase64 payload generated (${base64Qr.length} chars).`);
+
+const taxReceipt = new Receipt('80mm')
+  .center()
+  .bold(true)
+  .textLn("BOB'S FASHIONS")
+  .bold(false)
+  .twoColumn('Subtotal', 'SAR 850.00')
+  .twoColumn('VAT (15%)', 'SAR 150.00')
+  .twoColumn('TOTAL', 'SAR 1000.00')
+  .feed(1)
+  .zatcaQr(zatcaInvoice)
+  .cutFull();
+
+const taxEscpos = taxReceipt.encode('escpos');
+assert(Buffer.isBuffer(taxEscpos) && taxEscpos.length > 0);
+console.log(`   ✅ Receipt.zatcaQr() integrated and encoded (${taxEscpos.length} bytes).`);
+
+// 6. Test Virtual Receipt Previewer (SVG & HTML)
+console.log('\n6. Testing Virtual Receipt Previewer (SVG & HTML)...');
+const svg = receipt.renderSvg();
+assert(typeof svg === 'string', 'renderSvg must return string');
+assert(svg.startsWith('<svg'), 'SVG must start with <svg');
+assert(svg.includes('MINT BISTRO'), 'SVG must contain receipt text');
+assert(svg.includes('✂ CUT'), 'SVG must include cut indicator');
+console.log(`   ✅ renderSvg() generated valid SVG (${svg.length} bytes).`);
+
+const html = receipt.renderHtml();
+assert(typeof html === 'string', 'renderHtml must return string');
+assert(html.includes('papermint-receipt'), 'HTML must include receipt container class');
+assert(html.includes('MINT BISTRO'), 'HTML must contain receipt text');
+console.log(`   ✅ renderHtml() generated valid HTML (${html.length} bytes).`);
+
 console.log('\n🎉 ALL Node.js N-API binding tests passed successfully!');
+
 

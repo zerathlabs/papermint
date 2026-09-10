@@ -9,6 +9,7 @@ use crate::command::{
 use crate::layout::column::{
     PaperWidth, TableColumn, format_table_row, format_three_column, format_two_column,
 };
+use crate::tax::ZatcaInvoice;
 
 /// A fluent receipt document builder that generates a [`Vec<Command>`].
 ///
@@ -399,6 +400,16 @@ impl Receipt {
         })
     }
 
+    /// Appends a ZATCA (Saudi Arabia) & FTA (UAE) compliant E-Invoicing QR code from the given invoice metadata.
+    ///
+    /// Encodes invoice fields into standard TLV (Tag-Length-Value) bytes and Base64 as mandated
+    /// by Middle Eastern tax authorities.
+    #[must_use]
+    pub fn zatca_qr(self, invoice: &ZatcaInvoice) -> Self {
+        let payload = invoice.to_qr_base64();
+        self.qr(payload)
+    }
+
     /// Prints a monochrome raster image.
     #[must_use]
     pub fn image(mut self, image: ImageData) -> Self {
@@ -639,5 +650,22 @@ impl Receipt {
     pub fn raw(mut self, bytes: impl Into<Vec<u8>>) -> Self {
         self.commands.push(Command::Raw(bytes.into()));
         self
+    }
+
+    /// Renders a virtual SVG vector graphic preview of the receipt.
+    ///
+    /// Simulates realistic thermal receipt paper with monospace font styling,
+    /// column alignments, vector barcodes, and jagged paper cut edges.
+    #[must_use]
+    pub fn render_svg(&self) -> String {
+        crate::layout::preview::render_svg(self)
+    }
+
+    /// Renders a responsive, styled HTML snippet preview of the receipt.
+    ///
+    /// Ready for embedding in React, Next.js, Vue, or web checkout screens.
+    #[must_use]
+    pub fn render_html(&self) -> String {
+        crate::layout::preview::render_html(self)
     }
 }

@@ -706,3 +706,5 @@ module.exports.Receipt = nativeBinding.Receipt
 module.exports.JsReceipt = nativeBinding.JsReceipt
 module.exports.availablePorts = nativeBinding.availablePorts
 module.exports.listPrinters = nativeBinding.listPrinters
+module.exports.zatcaQrBase64 = nativeBinding.zatcaQrBase64
+

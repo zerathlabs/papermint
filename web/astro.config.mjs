@@ -34,6 +34,14 @@ export default defineConfig({
 						{ label: 'Node.js & TypeScript', slug: 'platforms/nodejs' },
 						{ label: 'Mobile (Expo & React Native)', slug: 'platforms/mobile' },
 						{ label: 'Print Daemon (HTTP REST)', slug: 'platforms/daemon' },
+						{ label: 'WebUSB (Browser Direct)', slug: 'platforms/webusb' },
+					],
+				},
+				{
+					label: 'Guides & Compliance',
+					items: [
+						{ label: 'E-Invoicing (ZATCA & UAE FTA)', slug: 'guides/e-invoicing' },
+						{ label: 'Virtual Receipt Previewer', slug: 'guides/receipt-previewer' },
 					],
 				},
 				{
@@ -43,6 +51,7 @@ export default defineConfig({
 						{ label: 'C-ABI Header (papermint.h)', slug: 'reference/c-abi' },
 					],
 				},
+
 			],
 		}),
 	],
