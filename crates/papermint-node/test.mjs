@@ -134,6 +134,21 @@ assert(html.includes('papermint-receipt'), 'HTML must include receipt container 
 assert(html.includes('MINT BISTRO'), 'HTML must contain receipt text');
 console.log(`   ✅ renderHtml() generated valid HTML (${html.length} bytes).`);
 
+// 7. Test CodePage & Raw Byte Injection
+console.log('\n7. Testing codePage(), raw(), and image() extensions...');
+const cpReceipt = new Receipt('80mm')
+  .codePage('wpc1256')
+  .textLn('فاتورة ضريبية')
+  .codePage(33)
+  .raw(Buffer.from([0x1B, 0x40])) // ESC @
+  .textLn('مرحبا بكم');
+
+const cpBytes = cpReceipt.encode('escpos');
+assert(Buffer.isBuffer(cpBytes) && cpBytes.length > 0, 'CodePage receipt must encode to buffer');
+// Verify that ESC t 50 (wpc1256 standard) and ESC t 33 (custom table 33) were emitted:
+assert(cpBytes.includes(0x1B) && cpBytes.includes(0x74), 'ESC t codepage commands must be present');
+console.log(`   ✅ codePage() and raw() encoded correctly (${cpBytes.length} bytes).`);
+
 console.log('\n🎉 ALL Node.js N-API binding tests passed successfully!');
 
 

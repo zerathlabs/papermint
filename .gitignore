@@ -1,6 +1,7 @@
 # Rust build artifacts
 /target/
 **/*.rs.bk
+*.bin
 
 # IDE
 .idea/

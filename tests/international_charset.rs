@@ -129,6 +129,16 @@ fn test_escpos_codepage_wire_bytes() {
         .encode(&papermint::Command::CodePage(CodePage::Pc866), &mut buf)
         .unwrap();
     assert_eq!(buf, vec![0x1B, 0x74, 17]);
+
+    // ESC t 33 -> Custom Table 33 (PosBox / Chinese OEM WPC1256)
+    buf.clear();
+    escpos
+        .encode(
+            &papermint::Command::CodePage(CodePage::Custom(33)),
+            &mut buf,
+        )
+        .unwrap();
+    assert_eq!(buf, vec![0x1B, 0x74, 33]);
 }
 
 #[test]
@@ -202,6 +212,18 @@ fn test_pc866_cyrillic_transcoding() {
     // 'П' is 0x8F, 'р' is 0xE0, 'и' is 0xA8, 'в' is 0xA2, 'е' is 0xA5, 'т' is 0xE2
     let encoded = page.encode_text("Привет");
     assert_eq!(encoded, vec![0x8F, 0xE0, 0xA8, 0xA2, 0xA5, 0xE2]);
+}
+
+#[test]
+fn test_wpc1256_arabic_transcoding() {
+    let text = "فاتورة";
+    let expected = vec![0xE1, 0xC7, 0xCA, 0xE8, 0xD1, 0xC9];
+
+    // Standard WPC1256
+    assert_eq!(CodePage::Wpc1256.encode_text(text), expected);
+
+    // OEM Custom Table 33 (used by PosBox PB800 / Rongta / Xprinter)
+    assert_eq!(CodePage::Custom(33).encode_text(text), expected);
 }
 
 #[tokio::test]

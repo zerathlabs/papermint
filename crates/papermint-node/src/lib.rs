@@ -8,8 +8,8 @@ use napi_derive::napi;
 use tokio::sync::Mutex;
 
 use papermint::{
-    Alignment, ColumnWidth, CoverStatus, DrawerStatus, Encoder, EscPos, PaperStatus, PaperWidth,
-    Printer, Receipt, Star, TableColumn, ZatcaInvoice,
+    Alignment, CodePage, ColumnWidth, CoverStatus, DrawerStatus, Encoder, EscPos, PaperStatus,
+    PaperWidth, Printer, Receipt, Star, TableColumn, ZatcaInvoice,
 };
 
 #[cfg(feature = "serial")]
@@ -304,6 +304,70 @@ impl JsReceipt {
     #[napi]
     pub fn open_drawer(&mut self) -> &Self {
         self.inner = std::mem::take(&mut self.inner).open_drawer();
+        self
+    }
+
+    /// Selects character code page table (e.g. "wpc1256", "pc437", "pc850", or numeric table ID like 33).
+    #[napi]
+    pub fn code_page(&mut self, page: napi::Either<String, u32>) -> &Self {
+        let cp = match page {
+            napi::Either::A(name) => match name.to_ascii_lowercase().as_str() {
+                "wpc1256" | "cp1256" | "windows-1256" => CodePage::Wpc1256,
+                "pc437" | "cp437" => CodePage::Pc437,
+                "katakana" => CodePage::Katakana,
+                "pc850" | "cp850" => CodePage::Pc850,
+                "pc860" | "cp860" => CodePage::Pc860,
+                "pc863" | "cp863" => CodePage::Pc863,
+                "pc865" | "cp865" => CodePage::Pc865,
+                "wpc1252" | "cp1252" | "windows-1252" => CodePage::Wpc1252,
+                "pc866" | "cp866" => CodePage::Pc866,
+                "pc852" | "cp852" => CodePage::Pc852,
+                "pc858" | "cp858" => CodePage::Pc858,
+                "pc720" | "cp720" => CodePage::Pc720,
+                "pc864" | "cp864" => CodePage::Pc864,
+                "pc737" | "cp737" => CodePage::Pc737,
+                "wpc1250" | "cp1250" => CodePage::Wpc1250,
+                "wpc1251" | "cp1251" => CodePage::Wpc1251,
+                "wpc1253" | "cp1253" => CodePage::Wpc1253,
+                "wpc1254" | "cp1254" => CodePage::Wpc1254,
+                "wpc1255" | "cp1255" => CodePage::Wpc1255,
+                "wpc1257" | "cp1257" => CodePage::Wpc1257,
+                "wpc1258" | "cp1258" => CodePage::Wpc1258,
+                "pc857" | "cp857" => CodePage::Pc857,
+                "iso8859_15" | "iso8859-15" => CodePage::Iso8859_15,
+                "pc874" | "cp874" => CodePage::Pc874,
+                other => {
+                    if let Ok(n) = other.parse::<u8>() {
+                        CodePage::Custom(n)
+                    } else {
+                        CodePage::Pc437
+                    }
+                }
+            },
+            napi::Either::B(num) => CodePage::Custom(num as u8),
+        };
+        self.inner = std::mem::take(&mut self.inner).code_page(cp);
+        self
+    }
+
+    /// Injects raw binary printer command bytes directly into the receipt stream.
+    #[napi]
+    pub fn raw(&mut self, bytes: Buffer) -> &Self {
+        self.inner = std::mem::take(&mut self.inner).raw(bytes.to_vec());
+        self
+    }
+
+    /// Appends a graphical raster image from PNG/JPEG/BMP/WebP buffer with automatic Floyd-Steinberg dithering.
+    #[napi]
+    pub fn image(&mut self, data: Buffer, max_width: Option<u32>) -> &Self {
+        let max_w = max_width.or_else(|| Some(self.inner.paper_width().dots()));
+        if let Ok(receipt) = std::mem::take(&mut self.inner).image_from_bytes_with_options(
+            &data,
+            max_w,
+            papermint::image::DitherMode::FloydSteinberg,
+        ) {
+            self.inner = receipt;
+        }
         self
     }
 

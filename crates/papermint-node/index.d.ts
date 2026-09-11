@@ -89,6 +89,12 @@ export declare class Receipt {
   beep(count?: number | undefined | null, duration?: number | undefined | null): this
   /** Triggers cash drawer kickout pin. */
   openDrawer(): this
+  /** Selects character code page table (e.g. "wpc1256", "pc437", "pc850", or numeric table ID like 33). */
+  codePage(page: string | number): this
+  /** Injects raw binary printer command bytes directly into the receipt stream. */
+  raw(bytes: Buffer): this
+  /** Appends a graphical raster image from PNG/JPEG/BMP/WebP buffer with automatic Floyd-Steinberg dithering. */
+  image(data: Buffer, maxWidth?: number | undefined | null): this
   /** Renders a virtual SVG vector graphic preview of the receipt. */
   renderSvg(): string
   /** Renders a responsive HTML component snippet preview of the receipt. */

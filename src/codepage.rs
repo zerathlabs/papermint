@@ -112,7 +112,7 @@ impl CodePage {
             Self::Pc858 => Self::encode_pc858(ch),
             Self::Pc437 => Self::encode_pc437(ch),
             Self::Pc866 => Self::encode_pc866(ch),
-            Self::Wpc1256 => Self::encode_wpc1256(ch),
+            Self::Wpc1256 | Self::Custom(33) => Self::encode_wpc1256(ch),
             Self::Iso8859_15 => Self::encode_iso8859_15(ch),
             _ => None,
         }
@@ -426,5 +426,24 @@ impl CodePage {
             c if (c as u32) >= 0x00A0 && (c as u32) <= 0x00FF => Some(c as u8),
             _ => None,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wpc1256_arabic_encoding() {
+        let text = "فاتورة";
+        let expected = vec![0xE1, 0xC7, 0xCA, 0xE8, 0xD1, 0xC9];
+
+        // Standard WPC1256
+        let encoded_standard = CodePage::Wpc1256.encode_text(text);
+        assert_eq!(encoded_standard, expected);
+
+        // OEM Custom Table 33 (used by PosBox PB800 / Rongta / Xprinter)
+        let encoded_custom33 = CodePage::Custom(33).encode_text(text);
+        assert_eq!(encoded_custom33, expected);
     }
 }

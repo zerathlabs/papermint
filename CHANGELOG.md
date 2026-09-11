@@ -1,5 +1,17 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Node.js N-API Extended Methods (`papermint-node`)**:
+  - Added `.codePage(page)` to switch character code tables by name (`"wpc1256"`, `"pc850"`, `"pc437"`, etc.) or numeric hardware table ID (`33`, `22`, etc.).
+  - Added `.raw(bytes)` to inject arbitrary raw printer escape sequences into the command stream.
+  - Added `.image(buffer, maxWidth?)` to print Floyd-Steinberg dithered raster images from Node.js buffers (canvas graphics, logos).
+- **OEM WPC1256 Arabic Table 33 Mapping**:
+  - Mapped `CodePage::Custom(33)` to `encode_wpc1256` in Rust core for Chinese/OEM thermal printers (PosBox PB800, Rongta, Xprinter).
+- **Arabic Thermal Receipt Example**:
+  - Added `examples/print_arabic_bill.mjs` demonstrating bilingual formatting, SAR currency, ZATCA e-invoicing QR code, and hardware codepage diagnostics.
+
 ## [0.2.1] - 2026-09-11
 
 ### Fixed
