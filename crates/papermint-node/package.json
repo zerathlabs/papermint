@@ -1,6 +1,6 @@
 {
   "name": "papermint",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "High-performance Node.js & TypeScript bindings for papermint thermal printing library",
   "homepage": "https://papermint.zerathlabs.com",
   "repository": {

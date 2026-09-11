@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1] - 2026-09-11
+
+### Fixed
+- **Multi-OS Universal npm Binaries**:
+  - Configured GitHub Actions release pipeline to build and bundle native `.node` modules for Windows (`win32-x64-msvc`), Linux (`linux-x64-gnu`), and macOS (`darwin-arm64`) directly into the published npm package.
+  - Fixes `Cannot find module 'papermint-win32-x64-msvc'` error on Windows when installing via `npm install papermint`.
+
 ## [0.2.0] - 2026-09-11
 
 ### Added
