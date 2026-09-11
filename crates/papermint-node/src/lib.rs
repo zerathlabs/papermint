@@ -22,10 +22,14 @@ use papermint::{UsbPrinterInfo, UsbTransport};
 pub struct TableColumnOptions {
     /// Fixed character width.
     pub width_fixed: Option<u32>,
+    /// Simple fixed character width shorthand.
+    pub width: Option<u32>,
     /// Proportional fraction of total columns (0.0 .. 1.0).
     pub width_fraction: Option<f64>,
     /// Text alignment: "left", "center", or "right".
     pub align: Option<String>,
+    /// Text alignment alias: "left", "center", or "right".
+    pub alignment: Option<String>,
 }
 
 /// ZATCA (Saudi Arabia) & FTA (UAE) compliant invoice metadata for E-Invoicing QR codes.
@@ -349,7 +353,7 @@ pub fn zatca_qr_base64(
 fn parse_columns(cols: &[TableColumnOptions]) -> Vec<TableColumn> {
     let mut result = Vec::with_capacity(cols.len());
     for c in cols {
-        let width = if let Some(fixed) = c.width_fixed {
+        let width = if let Some(fixed) = c.width_fixed.or(c.width) {
             ColumnWidth::Fixed(fixed as usize)
         } else if let Some(frac) = c.width_fraction {
             ColumnWidth::Fraction(frac as f32)
@@ -357,7 +361,8 @@ fn parse_columns(cols: &[TableColumnOptions]) -> Vec<TableColumn> {
             ColumnWidth::Fraction(1.0)
         };
 
-        let align = match c.align.as_deref().map(str::to_ascii_lowercase).as_deref() {
+        let align_str = c.align.as_deref().or(c.alignment.as_deref());
+        let align = match align_str.map(str::to_ascii_lowercase).as_deref() {
             Some("right") => Alignment::Right,
             Some("center") => Alignment::Center,
             _ => Alignment::Left,

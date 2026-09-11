@@ -133,10 +133,14 @@ export declare function listPrinters(): NapiResult<Array<JsUsbPrinterInfo>>
 export interface TableColumnOptions {
   /** Fixed character width. */
   widthFixed?: number
+  /** Simple fixed character width shorthand (alias for widthFixed). */
+  width?: number
   /** Proportional fraction of total columns (0.0 .. 1.0). */
   widthFraction?: number
   /** Text alignment: "left", "center", or "right". */
   align?: string
+  /** Text alignment alias: "left", "center", or "right" (alias for align). */
+  alignment?: string
 }
 
 /** ZATCA (Saudi Arabia) & FTA (UAE) compliant invoice metadata for E-Invoicing QR codes. */

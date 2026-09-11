@@ -37,7 +37,18 @@ const receipt = new Receipt('80mm')
   .cutFull();
 
 assert(receipt instanceof Receipt, 'receipt should be an instance of Receipt');
-console.log('   ✅ Receipt created successfully with fluent chaining.');
+
+// Test TableColumnOptions with DX aliases (width & alignment)
+const aliasReceipt = new Receipt('80mm');
+aliasReceipt.tableHeader(['QTY', 'ITEM', 'AMOUNT'], [
+  { width: 4, alignment: 'left' },
+  { widthFraction: 1.0, align: 'left' },
+  { width: 12, alignment: 'right' },
+]);
+aliasReceipt.row(['1x', 'Double Truffle Burger', '$14.50']);
+const aliasBytes = aliasReceipt.encode('escpos');
+assert(aliasBytes.length > 0, 'Receipt with column aliases should encode correctly');
+console.log('   ✅ Receipt created successfully with fluent chaining and column aliases.');
 
 // 2. Test Direct Buffer Encoding (ESC/POS and Star)
 console.log('\n2. Testing binary wire encoding to Node Buffers...');

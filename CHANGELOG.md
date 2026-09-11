@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.2.0] - 2026-09-11
+
+### Added
+- **Middle East E-Invoicing Engine (ZATCA & UAE FTA)**:
+  - Binary Tag-Length-Value (TLV) Phase 1 & Phase 2 encoder supporting Tags 1 through 9 (`ZatcaInvoice`, `encode_zatca_tlv`).
+  - Native `.zatca_qr(&invoice)` on fluent `Receipt` builder.
+  - Cross-platform Base64 QR payload generator (`zatca_qr_base64`).
+  - Node.js & TypeScript bindings: `zatcaQrBase64()` and `receipt.zatcaQr()`.
+  - Comprehensive documentation guide for Saudi Arabia and UAE tax compliance.
+- **Virtual Receipt Previewer (SVG & HTML)**:
+  - Resolution-independent vector SVG renderer (`render_svg()`) simulating physical monospace character cells, paper drop shadows, and jagged tear-off edge.
+  - Standalone responsive HTML component previewer (`render_html()`) for web POS checkouts and cashier screens.
+  - Node.js & TypeScript bindings: `receipt.renderSvg()` and `receipt.renderHtml()`.
+- **WebUSB Direct Browser Printing**:
+  - Driverless in-browser USB printing guide using the W3C WebUSB API.
+  - Production-ready React hook (`useWebUsbPrinter`) with auto-claiming Class 07 printer endpoints.
+- **Developer Experience (DX) Aliases in `papermint-node`**:
+  - `TableColumnOptions` now accepts flexible aliases: `width` (shorthand for `widthFixed`) and `alignment` (alias for `align`).
+- **Real-World Hardware Validation**:
+  - Physical hardware verification on 80mm high-speed POS hardware (PosBox PB800 at 230 mm/s) verifying synchronized multiline tables, ZATCA QR optical contrast, and auto-cutter actuation.
+
+### Changed
+- Modernized internal Base64 encoding in `src/tax/zatca.rs` using `as_chunks::<3>()` and `as_chunks::<4>()` for Rust 1.98 compatibility.
+
 ## [0.1.1] - 2026-09-10
 
 ### Added
