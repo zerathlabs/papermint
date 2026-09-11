@@ -14,31 +14,26 @@ const BASE64_ALPHABET: &[u8; 64] =
 #[must_use]
 pub fn base64_encode(data: &[u8]) -> String {
     let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
-    let mut chunks = data.chunks_exact(3);
+    let (chunks, remainder) = data.as_chunks::<3>();
 
-    for chunk in &mut chunks {
-        let b0 = chunk[0];
-        let b1 = chunk[1];
-        let b2 = chunk[2];
-
+    for &[b0, b1, b2] in chunks {
         out.push(BASE64_ALPHABET[(b0 >> 2) as usize] as char);
         out.push(BASE64_ALPHABET[(((b0 & 0x03) << 4) | (b1 >> 4)) as usize] as char);
         out.push(BASE64_ALPHABET[(((b1 & 0x0f) << 2) | (b2 >> 6)) as usize] as char);
         out.push(BASE64_ALPHABET[(b2 & 0x3f) as usize] as char);
     }
 
-    let rem = chunks.remainder();
-    match rem.len() {
+    match remainder.len() {
         1 => {
-            let b0 = rem[0];
+            let b0 = remainder[0];
             out.push(BASE64_ALPHABET[(b0 >> 2) as usize] as char);
             out.push(BASE64_ALPHABET[((b0 & 0x03) << 4) as usize] as char);
             out.push('=');
             out.push('=');
         }
         2 => {
-            let b0 = rem[0];
-            let b1 = rem[1];
+            let b0 = remainder[0];
+            let b1 = remainder[1];
             out.push(BASE64_ALPHABET[(b0 >> 2) as usize] as char);
             out.push(BASE64_ALPHABET[(((b0 & 0x03) << 4) | (b1 >> 4)) as usize] as char);
             out.push(BASE64_ALPHABET[((b1 & 0x0f) << 2) as usize] as char);
@@ -77,30 +72,29 @@ pub fn base64_decode(input: &str) -> Option<Vec<u8>> {
     };
 
     let mut out = Vec::with_capacity(unpadded.len() * 3 / 4);
-    let mut chunks = unpadded.chunks_exact(4);
+    let (chunks, remainder) = unpadded.as_chunks::<4>();
 
-    for chunk in &mut chunks {
-        let n0 = decode_char(chunk[0])?;
-        let n1 = decode_char(chunk[1])?;
-        let n2 = decode_char(chunk[2])?;
-        let n3 = decode_char(chunk[3])?;
+    for &[c0, c1, c2, c3] in chunks {
+        let n0 = decode_char(c0)?;
+        let n1 = decode_char(c1)?;
+        let n2 = decode_char(c2)?;
+        let n3 = decode_char(c3)?;
 
         out.push((n0 << 2) | (n1 >> 4));
         out.push((n1 << 4) | (n2 >> 2));
         out.push((n2 << 6) | n3);
     }
 
-    let rem = chunks.remainder();
-    match rem.len() {
+    match remainder.len() {
         2 => {
-            let n0 = decode_char(rem[0])?;
-            let n1 = decode_char(rem[1])?;
+            let n0 = decode_char(remainder[0])?;
+            let n1 = decode_char(remainder[1])?;
             out.push((n0 << 2) | (n1 >> 4));
         }
         3 => {
-            let n0 = decode_char(rem[0])?;
-            let n1 = decode_char(rem[1])?;
-            let n2 = decode_char(rem[2])?;
+            let n0 = decode_char(remainder[0])?;
+            let n1 = decode_char(remainder[1])?;
+            let n2 = decode_char(remainder[2])?;
             out.push((n0 << 2) | (n1 >> 4));
             out.push((n1 << 4) | (n2 >> 2));
         }
