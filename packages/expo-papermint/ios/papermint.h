@@ -37,9 +37,8 @@ extern "C" {
 /* Opaque receipt handle */
 typedef struct PapermintReceipt PapermintReceipt;
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * 1. Fluent C-ABI Handle Functions
- * ───────────────────────────────────────────────────────────────────────────── */
+/* Fluent C-ABI handle functions */
+
 
 /** Creates a new receipt builder instance. Must be freed with papermint_receipt_free. */
 PapermintReceipt* papermint_receipt_create(uint8_t paper_width);
@@ -95,9 +94,8 @@ uint8_t* papermint_receipt_encode(const PapermintReceipt* handle, uint8_t dialec
 /** Frees a byte buffer allocated by papermint_receipt_encode or papermint_compile_json. */
 void papermint_bytes_free(uint8_t* ptr, size_t len);
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * 2. High-Performance One-Shot JSON Ticket Compiler
- * ───────────────────────────────────────────────────────────────────────────── */
+/* High-performance one-shot JSON ticket compiler */
+
 
 /**
  * Compiles a JSON ticket payload into binary ESC/POS or StarPRNT wire bytes.

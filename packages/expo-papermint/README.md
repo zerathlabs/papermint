@@ -22,18 +22,24 @@
 ### In an Expo App (Managed / Dev Client)
 ```bash
 npx expo install expo-papermint
+# or
+pnpm add expo-papermint
 ```
 
 *For local monorepo development:*
 ```bash
-npm install /path/to/papermint/packages/expo-papermint
+pnpm add /path/to/papermint/packages/expo-papermint
+# or npm install /path/to/papermint/packages/expo-papermint
 ```
 
 ### In a Bare / Pure React Native App
 ```bash
+pnpm add expo-papermint expo-modules-core
+# or
 npm install expo-papermint expo-modules-core
 ```
 *React Native's community CLI autolinking will discover and link the native modules automatically upon your next `npx pod-install` or `./gradlew assembleDebug`.*
+
 
 ---
 

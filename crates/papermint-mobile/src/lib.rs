@@ -18,9 +18,7 @@ pub struct PapermintReceipt {
     inner: Receipt,
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 1. Fluent C-ABI Handle Functions
-// ─────────────────────────────────────────────────────────────────────────────
+// Fluent C-ABI handle functions
 
 /// Creates a new receipt builder instance.
 ///
@@ -292,9 +290,7 @@ pub extern "C" fn papermint_bytes_free(ptr: *mut u8, len: usize) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 2. High-Performance One-Shot JSON Ticket Compiler
-// ─────────────────────────────────────────────────────────────────────────────
+// High-performance one-shot JSON ticket compiler
 
 #[derive(Debug, Deserialize)]
 struct MobileTicketItem {
@@ -369,7 +365,7 @@ pub extern "C" fn papermint_compile_json(
 
     let mut r = Receipt::new(width).init();
 
-    // 1. Header (Title, Subtitle, Address)
+    // Header (title, subtitle, address)
     if let Some(title) = &ticket.title {
         r = r.center().bold(true).text_ln(title).bold(false);
     }
@@ -390,7 +386,7 @@ pub extern "C" fn papermint_compile_json(
         r = r.divider(div_char);
     }
 
-    // 2. Metadata Key-Value pairs
+    // Metadata key-value pairs
     if let Some(meta) = &ticket.metadata {
         for m in meta {
             r = r.left().row(&[&m.label, &m.value]);
@@ -400,9 +396,9 @@ pub extern "C" fn papermint_compile_json(
         }
     }
 
-    // 3. Line Items Table
+    // Line items table
     if let Some(items) = &ticket.items {
-        // Table Header
+        // Table header
         r = r.bold(true).row(&["QTY", "ITEM", "TOTAL"]).bold(false);
         r = r.divider('-');
 
@@ -413,7 +409,7 @@ pub extern "C" fn papermint_compile_json(
         r = r.divider(div_char);
     }
 
-    // 4. Totals (Subtotal, Tax, Final Total)
+    // Totals
     if let Some(totals) = &ticket.totals {
         for t in totals {
             if t.label.eq_ignore_ascii_case("total") || t.label.eq_ignore_ascii_case("grand total")
@@ -426,32 +422,32 @@ pub extern "C" fn papermint_compile_json(
         r = r.divider(div_char);
     }
 
-    // 5. QR Code
+    // QR code
     if let Some(qr_url) = &ticket.qr {
         r = r.center().qr(qr_url).feed(1);
     }
 
-    // 6. Barcode
+    // Barcode
     if let Some(bc) = &ticket.barcode {
         r = r.center().barcode_128(bc).feed(1);
     }
 
-    // 7. Footer
+    // Footer
     if let Some(footer) = &ticket.footer {
         r = r.center().text_ln(footer);
     }
 
-    // 8. Cash Drawer Kickout
+    // Cash drawer kickout
     if ticket.open_drawer.unwrap_or(false) {
         r = r.open_drawer();
     }
 
-    // 9. Buzzer Beep
+    // Buzzer alert
     if let Some(b) = ticket.beep.filter(|&b| b > 0) {
         r = r.beep(b, 2);
     }
 
-    // 10. Cut Mode
+    // Paper cut
     match ticket.cut_mode.as_deref() {
         Some("none" | "None") => {}
         Some("partial" | "Partial") => {
@@ -462,7 +458,7 @@ pub extern "C" fn papermint_compile_json(
         }
     }
 
-    // Encode to Wire Bytes
+    // Encode to wire bytes
     let encode_res = if dialect == 1 {
         Encoder::star().encode(r.commands())
     } else {
@@ -490,13 +486,11 @@ fn text_is_empty(ptr: *const c_char) -> bool {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// 3. Android JNI Bindings (Expo & React Native)
-// ─────────────────────────────────────────────────────────────────────────────
+// Android JNI bindings (Expo & React Native)
 
+use jni::JNIEnv;
 use jni::objects::{JClass, JString};
 use jni::sys::{jbyteArray, jint};
-use jni::JNIEnv;
 
 /// JNI bridge for `expo.modules.papermint.ExpoPapermintModule.nativeCompileTicket`.
 ///
@@ -538,4 +532,3 @@ pub extern "system" fn Java_expo_modules_papermint_ExpoPapermintModule_nativeCom
     papermint_bytes_free(ptr, out_len);
     byte_array.into_raw()
 }
-
