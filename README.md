@@ -4,6 +4,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/papermint.svg)](https://crates.io/crates/papermint)
 [![npm](https://img.shields.io/npm/v/papermint.svg)](https://www.npmjs.com/package/papermint)
+[![npm (expo)](https://img.shields.io/npm/v/expo-papermint.svg?label=expo-papermint)](https://www.npmjs.com/package/expo-papermint)
 [![Documentation](https://img.shields.io/badge/docs-papermint.zerathlabs.com-388E3C)](https://papermint.zerathlabs.com)
 [![docs.rs](https://docs.rs/papermint/badge.svg)](https://docs.rs/papermint)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -396,7 +397,40 @@ const rawBuffer = receipt.encode('escpos');
 
 ---
 
-### 10. Native Print Daemon (`papermintd`)
+### 10. Mobile & Expo Module (`expo-papermint`)
+
+High-performance native receipt compilation engine for **Expo SDK 56+** and **React Native** (iOS & Android). Formats complex CJK/Arabic Unicode tables, ZATCA tax QR codes, and Floyd-Steinberg dithered raster graphics in **microseconds**, returning zero-copy raw byte buffers (`Uint8Array`) ready to stream to portable Bluetooth or Wi-Fi printers:
+
+```bash
+# In Expo projects:
+npx expo install expo-papermint
+
+# In Bare React Native projects:
+pnpm add expo-papermint expo-modules-core
+```
+
+```typescript
+import { Receipt } from 'expo-papermint';
+
+// Build and compile ticket in ~10 microseconds
+const wireBytes: Uint8Array = Receipt.create('80mm')
+  .title('MINT BISTRO')
+  .subtitle('Order #1042')
+  .divider('=')
+  .item('Truffle Smash Burger', '$14.50', 2, '$29.00')
+  .item('Wood-Fired Margherita Pizza', '$18.00', 1)
+  .divider('-')
+  .total('TOTAL DUE:', '$47.00')
+  .qr('https://pay.mintbistro.com/bill/1042')
+  .cut()
+  .compile('escpos'); // or 'star'
+
+// Stream wireBytes directly over Bluetooth Classic (RFCOMM) or BLE!
+```
+
+---
+
+### 11. Native Print Daemon (`papermintd`)
 
 `papermintd` is a standalone, high-concurrency HTTP sidecar service powered by Axum and Tokio for local POS ticket streaming:
 
