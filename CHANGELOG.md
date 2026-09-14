@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [0.2.2] - 2026-09-14
 
 ### Added
 - **Universal Expo & React Native Module (`expo-papermint`)**:
@@ -9,6 +9,11 @@
   - Added Android JNI bridge `Java_expo_modules_papermint_ExpoPapermintModule_nativeCompileTicket` in `crates/papermint-mobile`.
   - Added fluent `Receipt` builder, `compileTicket()`, and `generateZatcaQr()` for mobile POS applications.
   - Added complete Bluetooth Classic (`react-native-bluetooth-classic`) and BLE (`react-native-ble-plx`) printing guides.
+- **Automated Mobile Release & CI Pipelines**:
+  - Configured GitHub Actions release workflow to cross-compile Android `.so` libraries (`arm64-v8a`, `armeabi-v7a`, `x86_64`) via `cargo-ndk`.
+  - Configured macOS runner to build device + simulator iOS static libraries and package into `PapermintMobile.xcframework`.
+  - Automated dual npm publishing for `papermint` (desktop/server) and `expo-papermint` (mobile).
+  - Unified workspace bumping target in `Makefile` (`make bump V=x.y.z`) covering Cargo crates, npm packages, iOS Podspec, and Android Gradle.
 - **Node.js N-API Extended Methods (`papermint-node`)**:
   - Added `.codePage(page)` to switch character code tables by name (`"wpc1256"`, `"pc850"`, `"pc437"`, etc.) or numeric hardware table ID (`33`, `22`, etc.).
   - Added `.raw(bytes)` to inject arbitrary raw printer escape sequences into the command stream.

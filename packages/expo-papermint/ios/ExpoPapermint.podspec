@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name           = 'ExpoPapermint'
-  s.version        = '0.2.1'
+  s.version        = '0.2.2'
   s.summary        = 'High-performance receipt and label compilation engine for Expo & React Native'
   s.description    = 'Native ESC/POS, StarPRNT, and thermal receipt compilation module powered by Papermint Rust engine'
   s.author         = 'Papermint Team'
