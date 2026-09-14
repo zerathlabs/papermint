@@ -25,7 +25,18 @@
   },
   "author": "Papermint Team <dev.mohammedsh@gmail.com> (https://github.com/mohxmd)",
   "license": "MIT",
-  "homepage": "https://github.com/zerathlabs/papermint#readme",
+  "homepage": "https://papermint.zerathlabs.com",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "build",
+    "ios",
+    "android",
+    "expo-module.config.json",
+    "README.md",
+    "LICENSE"
+  ],
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@types/jest": "^29.2.1",

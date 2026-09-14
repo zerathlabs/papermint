@@ -70,6 +70,19 @@ bump:
 		let idx = fs.readFileSync(idxPath, 'utf8'); \
 		idx = idx.replace(/expected \\d+\\.\\d+\\.\\d+/g, 'expected ' + v).replace(/!== '\\d+\\.\\d+\\.\\d+'/g, '!== \'' + v + '\''); \
 		fs.writeFileSync(idxPath, idx, 'utf8'); \
+		const expoPkgPath = 'packages/expo-papermint/package.json'; \
+		let expoPkg = JSON.parse(fs.readFileSync(expoPkgPath, 'utf8')); \
+		expoPkg.version = v; \
+		fs.writeFileSync(expoPkgPath, JSON.stringify(expoPkg, null, 2) + '\n', 'utf8'); \
+		const podPath = 'packages/expo-papermint/ios/ExpoPapermint.podspec'; \
+		let pod = fs.readFileSync(podPath, 'utf8'); \
+		pod = pod.replace(/s\\.version\\s*=\\s*['\"].*?['\"]/, \"s.version        = '\" + v + \"'\"); \
+		fs.writeFileSync(podPath, pod, 'utf8'); \
+		const gradlePath = 'packages/expo-papermint/android/build.gradle'; \
+		let gradle = fs.readFileSync(gradlePath, 'utf8'); \
+		gradle = gradle.replace(/version\\s*=\\s*['\"].*?['\"]/, \"version = '\" + v + \"'\"); \
+		gradle = gradle.replace(/versionName\\s*['\"].*?['\"]/, \"versionName \\\"\" + v + \"\\\"\"); \
+		fs.writeFileSync(gradlePath, gradle, 'utf8'); \
 	"
 	@cargo check --workspace --quiet
 	@echo "✅ All packages bumped to $(V) and Cargo.lock synced!"

@@ -75,3 +75,27 @@ jobs:
         working-directory: crates/papermint-node
         run: pnpm test
 
+  expo-module:
+    name: Expo Module TypeScript Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+
+      - name: Install Expo Dependencies
+        working-directory: packages/expo-papermint
+        run: pnpm install
+
+      - name: Build TypeScript Module
+        working-directory: packages/expo-papermint
+        run: pnpm run build
+

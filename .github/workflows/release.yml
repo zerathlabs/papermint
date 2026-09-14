@@ -51,6 +51,12 @@ jobs:
           pnpm run build
           pnpm test
 
+      - name: Verify Expo Module Build
+        working-directory: packages/expo-papermint
+        run: |
+          pnpm install
+          pnpm run build
+
   build-daemon:
     name: Build Daemon Binary (${{ matrix.target }})
     needs: validate
@@ -225,3 +231,135 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         if: env.NODE_AUTH_TOKEN != ''
         run: npm publish --access public
+
+  build-expo-android:
+    name: Build Android JNI Libraries (.so)
+    needs: validate
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android, armv7-linux-androideabi, x86_64-linux-android
+
+      - name: Cache Cargo Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install cargo-ndk
+        run: cargo install cargo-ndk
+
+      - name: Set Android NDK Path
+        run: |
+          if [ -z "$ANDROID_NDK_HOME" ] && [ -n "$ANDROID_NDK_LATEST_HOME" ]; then
+            echo "ANDROID_NDK_HOME=$ANDROID_NDK_LATEST_HOME" >> $GITHUB_ENV
+          fi
+
+      - name: Build Android .so Binaries
+        run: |
+          cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o jniLibs build --package papermint-mobile --release
+
+      - name: Upload Android JNI Libraries
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-android-jni-libs
+          path: jniLibs
+
+  build-expo-ios:
+    name: Build iOS XCFramework
+    needs: validate
+    runs-on: macos-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios, aarch64-apple-ios-sim, x86_64-apple-ios
+
+      - name: Cache Cargo Dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build iOS Device Static Library
+        run: cargo build --package papermint-mobile --target aarch64-apple-ios --release
+
+      - name: Build iOS Simulator Static Libraries
+        run: |
+          cargo build --package papermint-mobile --target aarch64-apple-ios-sim --release
+          cargo build --package papermint-mobile --target x86_64-apple-ios --release
+
+      - name: Merge Simulator Binaries & Package XCFramework
+        run: |
+          mkdir -p target/ios-sim/release
+          lipo -create \
+            target/aarch64-apple-ios-sim/release/libpapermint_mobile.a \
+            target/x86_64-apple-ios/release/libpapermint_mobile.a \
+            -output target/ios-sim/release/libpapermint_mobile.a
+
+          mkdir -p xcframework-headers
+          cp crates/papermint-mobile/include/papermint.h xcframework-headers/
+
+          xcodebuild -create-xcframework \
+            -library target/aarch64-apple-ios/release/libpapermint_mobile.a \
+            -headers xcframework-headers \
+            -library target/ios-sim/release/libpapermint_mobile.a \
+            -headers xcframework-headers \
+            -output PapermintMobile.xcframework
+
+      - name: Upload iOS XCFramework
+        uses: actions/upload-artifact@v4
+        with:
+          name: expo-ios-xcframework
+          path: PapermintMobile.xcframework
+
+  publish-expo-npm:
+    name: Publish expo-papermint to npm
+    needs: [validate, build-expo-android, build-expo-ios]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node & pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js Auth
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.x
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download Android JNI libs
+        uses: actions/download-artifact@v4
+        with:
+          name: expo-android-jni-libs
+          path: packages/expo-papermint/android/src/main/jniLibs
+
+      - name: Download iOS XCFramework
+        uses: actions/download-artifact@v4
+        with:
+          name: expo-ios-xcframework
+          path: packages/expo-papermint/ios/PapermintMobile.xcframework
+
+      - name: Verify Bundled Native Assets
+        working-directory: packages/expo-papermint
+        run: |
+          echo "Android JNI Libs:"
+          ls -la android/src/main/jniLibs/ || true
+          echo "iOS XCFramework:"
+          ls -la ios/PapermintMobile.xcframework/ || true
+
+      - name: Build & Publish expo-papermint
+        working-directory: packages/expo-papermint
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        if: env.NODE_AUTH_TOKEN != ''
+        run: |
+          pnpm install
+          pnpm run build
+          pnpm publish --access public --no-git-checks

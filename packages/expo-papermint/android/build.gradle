@@ -4,13 +4,18 @@ plugins {
 }
 
 group = 'expo.modules.papermint'
-version = '0.1.0'
+version = '0.2.1'
 
 android {
   namespace "expo.modules.papermint"
   defaultConfig {
     versionCode 1
-    versionName "0.1.0"
+    versionName "0.2.1"
+  }
+  sourceSets {
+    main {
+      jniLibs.srcDirs = ['src/main/jniLibs']
+    }
   }
   lintOptions {
     abortOnError false
