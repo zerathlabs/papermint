@@ -7,6 +7,8 @@
 [![npm (expo)](https://img.shields.io/npm/v/expo-papermint.svg?label=expo-papermint)](https://www.npmjs.com/package/expo-papermint)
 [![Documentation](https://img.shields.io/badge/docs-papermint.zerathlabs.com-388E3C)](https://papermint.zerathlabs.com)
 [![docs.rs](https://docs.rs/papermint/badge.svg)](https://docs.rs/papermint)
+[![Sponsor](https://img.shields.io/badge/Sponsor-♥-ea4aaa.svg)](https://github.com/sponsors/mohxmd)
+[![Donate PayPal](https://img.shields.io/badge/Donate-PayPal-00457C.svg?logo=paypal)](https://paypal.me/zerathlabs)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 ---
