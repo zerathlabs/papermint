@@ -47,9 +47,43 @@ The output contains:
 
 ---
 
-## 3. Expo SDK 56+ (Inline Modules)
+## 3. Integration Approaches
+
+You can integrate Papermint into your mobile app using any of three approaches:
+
+### Approach 1: Official Universal Module (`expo-papermint`) — *Recommended*
+
+The quickest and cleanest approach. No need to write or maintain native Kotlin or Swift files:
+
+```bash
+# In Expo apps:
+npx expo install expo-papermint
+
+# In Bare / Pure React Native apps:
+npm install expo-papermint expo-modules-core
+```
+
+#### Usage in TypeScript:
+```typescript
+import { Receipt } from 'expo-papermint';
+
+const wireBytes: Uint8Array = Receipt.create('80mm')
+  .title('BLUE CAFE & ROASTERY')
+  .subtitle('Order #4092')
+  .item('Iced Oat Latte', '$5.50', 1)
+  .item('Avocado Toast', '$18.00', 2, '$9.00')
+  .total('TOTAL', '$23.50')
+  .qr('https://pay.bluecafe.com/4092')
+  .cut()
+  .compile('escpos'); // or 'star'
+```
+
+---
+
+### Approach 2: Expo SDK 56+ (Inline Modules)
 
 Expo SDK 56 introduced **Inline Modules**, allowing you to write Swift and Kotlin directly in your project without maintaining separate npm packages.
+
 
 ### Step 1: Enable Inline Modules in `app.json`
 

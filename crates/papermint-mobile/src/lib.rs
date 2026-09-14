@@ -489,3 +489,53 @@ fn text_is_empty(ptr: *const c_char) -> bool {
         unsafe { *ptr == 0 }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// 3. Android JNI Bindings (Expo & React Native)
+// ─────────────────────────────────────────────────────────────────────────────
+
+use jni::objects::{JClass, JString};
+use jni::sys::{jbyteArray, jint};
+use jni::JNIEnv;
+
+/// JNI bridge for `expo.modules.papermint.ExpoPapermintModule.nativeCompileTicket`.
+///
+/// Takes a JSON receipt string and dialect integer (0 = ESC/POS, 1 = StarPRNT),
+/// compiles it via [`papermint_compile_json`], and returns a `jbyteArray`.
+#[unsafe(no_mangle)]
+pub extern "system" fn Java_expo_modules_papermint_ExpoPapermintModule_nativeCompileTicket(
+    mut env: JNIEnv,
+    _class: JClass,
+    json: JString,
+    dialect: jint,
+) -> jbyteArray {
+    let json_str: String = match env.get_string(&json) {
+        Ok(s) => s.into(),
+        Err(_) => return std::ptr::null_mut(),
+    };
+
+    let c_json = match std::ffi::CString::new(json_str) {
+        Ok(c) => c,
+        Err(_) => return std::ptr::null_mut(),
+    };
+
+    let mut out_len: usize = 0;
+    let ptr = papermint_compile_json(c_json.as_ptr(), dialect as u8, &mut out_len);
+
+    if ptr.is_null() || out_len == 0 {
+        return std::ptr::null_mut();
+    }
+
+    let slice = unsafe { std::slice::from_raw_parts(ptr, out_len) };
+    let byte_array = match env.byte_array_from_slice(slice) {
+        Ok(ba) => ba,
+        Err(_) => {
+            papermint_bytes_free(ptr, out_len);
+            return std::ptr::null_mut();
+        }
+    };
+
+    papermint_bytes_free(ptr, out_len);
+    byte_array.into_raw()
+}
+

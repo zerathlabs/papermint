@@ -3,6 +3,12 @@
 ## [Unreleased]
 
 ### Added
+- **Universal Expo & React Native Module (`expo-papermint`)**:
+  - Added official Expo Module package in `packages/expo-papermint` adhering to Expo Modules API v2 and `create-expo-module`.
+  - Zero-copy native marshaling from `ByteArray` (Android) and `Data` (iOS) directly into JavaScript `Uint8Array`.
+  - Added Android JNI bridge `Java_expo_modules_papermint_ExpoPapermintModule_nativeCompileTicket` in `crates/papermint-mobile`.
+  - Added fluent `Receipt` builder, `compileTicket()`, and `generateZatcaQr()` for mobile POS applications.
+  - Added complete Bluetooth Classic (`react-native-bluetooth-classic`) and BLE (`react-native-ble-plx`) printing guides.
 - **Node.js N-API Extended Methods (`papermint-node`)**:
   - Added `.codePage(page)` to switch character code tables by name (`"wpc1256"`, `"pc850"`, `"pc437"`, etc.) or numeric hardware table ID (`33`, `22`, etc.).
   - Added `.raw(bytes)` to inject arbitrary raw printer escape sequences into the command stream.
@@ -11,6 +17,7 @@
   - Mapped `CodePage::Custom(33)` to `encode_wpc1256` in Rust core for Chinese/OEM thermal printers (PosBox PB800, Rongta, Xprinter).
 - **Arabic Thermal Receipt Example**:
   - Added `examples/print_arabic_bill.mjs` demonstrating bilingual formatting, SAR currency, ZATCA e-invoicing QR code, and hardware codepage diagnostics.
+
 
 ## [0.2.1] - 2026-09-11
 

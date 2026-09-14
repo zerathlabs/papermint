@@ -1,0 +1,10 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "expo-papermint": ["../src/index"],
+      "expo-papermint/*": ["../src/*"]
+    }
+  }
+}

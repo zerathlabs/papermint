@@ -5,6 +5,8 @@
 
 # IDE
 .idea/
+.vscode/
+**/.vscode/
 *.swp
 *.swo
 *~
