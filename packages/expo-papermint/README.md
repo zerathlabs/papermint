@@ -276,15 +276,71 @@ const bytes = Receipt.create('80mm')
 
 ---
 
+## Virtual Receipt Previews (SVG & HTML)
+
+Preview your receipts on-screen in your mobile app before sending wire bytes to the physical printer:
+
+```tsx
+import { Receipt, renderSvg, renderHtml } from 'expo-papermint';
+
+const receipt = Receipt.create('80mm')
+  .center()
+  .bold(true)
+  .textLn('MINT BISTRO')
+  .bold(false)
+  .divider('=')
+  .twoColumn('1x Truffle Wagyu Burger', '$14.50')
+  .twoColumn('1x Mint Cooler', '$4.50')
+  .divider('-')
+  .twoColumn('TOTAL', '$19.00');
+
+// 1. Render resolution-independent SVG markup (e.g. for react-native-svg)
+const svgMarkup: string = receipt.renderSvg();
+
+// 2. Render responsive HTML markup (e.g. for react-native-webview)
+const htmlMarkup: string = receipt.renderHtml();
+```
+
+---
+
+## Flexible Multi-Column Tables
+
+Create responsive tables with fixed-pitch or fractional column widths:
+
+```ts
+const receipt = Receipt.create('80mm')
+  .tableHeader(['QTY', 'ITEM', 'PRICE'], [
+    { widthFixed: 4, align: 'left' },
+    { widthFraction: 0.65, align: 'left' },
+    { widthFraction: 0.25, align: 'right' },
+  ])
+  .row(['2x', 'Wood-Fired Margherita Pizza', '$36.00'])
+  .row(['1x', 'San Pellegrino Sparkling', '$3.50'])
+  .clearColumns();
+```
+
+---
+
 ## API Reference
+
+### `Receipt.create(paperWidth?: PaperWidth): Receipt`
+Fluent chainable receipt builder with 100% feature parity:
+- **Typography**: `.bold()`, `.underline()`, `.invert()`, `.doubleSize()`, `.doubleWidth()`, `.doubleHeight()`, `.text()`, `.textLn()`.
+- **Alignment**: `.align()`, `.left()`, `.center()`, `.right()`.
+- **Dividers**: `.divider()`, `.dividerDouble()`, `.dividerDotted()`, `.dividerDashed()`, `.dividerPattern()`.
+- **Tables & Rows**: `.twoColumn()`, `.threeColumn()`, `.setColumns()`, `.row()`, `.tableHeader()`, `.clearColumns()`.
+- **Hardware & Codes**: `.codePage()`, `.qr()`, `.barcode()`, `.image()`, `.raw()`, `.openDrawer()`, `.beep()`, `.cut()`, `.feed()`.
+- **Compilation & Previews**: `.compile(dialect?)`, `.renderSvg()`, `.renderHtml()`.
+
+### `renderSvg(ticketOrCommands, paperWidth?): string`
+Direct helper to render an SVG receipt preview.
+
+### `renderHtml(ticketOrCommands, paperWidth?): string`
+Direct helper to render an HTML receipt preview.
 
 ### `compileTicket(ticket: TicketPayload, dialect?: Dialect): Uint8Array`
 Compiles a structured ticket payload into binary wire bytes.
 - `dialect`: `'escpos'` (default) or `'star'`.
-
-### `Receipt.create(paperWidth?: PaperWidth): Receipt`
-Fluent chainable builder.
-- Methods: `.title()`, `.subtitle()`, `.address()`, `.meta()`, `.item()`, `.total()`, `.qr()`, `.barcode()`, `.divider()`, `.openDrawer()`, `.beep()`, `.cut()`, `.compile()`.
 
 ### `generateZatcaQr(params: ZatcaQrParams): string`
 Generates compliant ZATCA Phase 1 & 2 TLV Base64 QR strings.

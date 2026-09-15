@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.2.3] - 2026-09-15
+
+### Added
+- **Complete Feature Parity for Mobile (`expo-papermint` & `papermint-mobile`)**:
+  - Reached 100% feature parity with `papermint-node` and Rust core.
+  - Granular Command IR: Mobile apps can now use `.bold()`, `.underline()`, `.invert()`, `.doubleSize()`, `.doubleWidth()`, `.doubleHeight()`, `.left()`, `.center()`, `.right()`, `.align()`.
+  - Multi-Column Flexible Tables: Added `.setColumns()`, `.row()`, `.tableHeader()`, `.clearColumns()` with fixed-pitch and fractional column widths.
+  - Rich Dividers: Added `.dividerDouble()`, `.dividerDotted()`, `.dividerDashed()`, and `.dividerPattern()`.
+  - Hardware Controls: Added `.openDrawer()`, `.beep()`, `.cut()`, `.feed()`.
+  - Custom CodePage Switching: Added `.codePage()` for dynamic code table selection on mobile.
+  - Image Printing: Portable `.image(base64PngOrJpeg)` with zero native image library dependencies.
+  - Raw Injection: Added `.raw()` for custom ESC/POS or StarPRNT byte sequences.
+- **On-Device Virtual Receipt Previewers (SVG & HTML)**:
+  - Added `.renderSvg()` and `.renderHtml()` to mobile `Receipt` builder and standalone helpers (`renderSvg()`, `renderHtml()`).
+  - Added C-ABI exports `papermint_compile_json_svg`, `papermint_compile_json_html`, and `papermint_string_free` in `crates/papermint-mobile`.
+  - Added Android JNI bridges (`nativeRenderSvg`, `nativeRenderHtml`) and iOS Swift bindings with automatic memory deallocation.
+  - Enables instant, pixel-accurate vector and HTML receipt previews on mobile screens before physical printing.
+
+### Fixed
+- **Unicode-Compliant Windows-1256 (WPC1256) Arabic Transcoding Engine**:
+  - Replaced legacy contiguous arithmetic with the official Microsoft / Unicode Consortium mapping (`CP1256.TXT`).
+  - Fixed Arabic letters (`ف`, `و`, `ك`, `ط`, etc.) and punctuation (`،`, `؛`, `؟`) which previously collided with Latin French accents (`è`) or mathematical signs (`×`).
+  - Added full Arabic Tashkeel diacritics (Fathatan, Dammatan, Kasratan, Fatha, Damma, Kasra, Shadda, Sukun).
+  - Added Persian & Urdu character support (`پ`, `ٹ`, `چ`, `ژ`, `ڈ`, `گ`, `ک`, `ڑ`, `ں`, `ہ`).
+  - Standardized OEM Table 33 for Chinese/OEM thermal POS printers (PosBox PB800, Rongta, Xprinter).
+  - Thermal head protection: Arabic-Indic digits (`٠..٩`) automatically fall back to ASCII (`0..9`) to prevent thermal print head mojibake.
+
 ## [0.2.2] - 2026-09-14
 
 ### Added

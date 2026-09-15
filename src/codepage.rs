@@ -536,6 +536,11 @@ impl CodePage {
             '٨' => Some(b'8'),
             '٩' => Some(b'9'),
 
+            // Arabic-Indic punctuation fallbacks
+            '٫' => Some(b'.'), // U+066B Arabic Decimal Separator
+            '٬' => Some(b','), // U+066C Arabic Thousands Separator
+            '٪' => Some(b'%'), // U+066A Arabic Percent Sign
+
             _ => None,
         }
     }
@@ -632,5 +637,10 @@ mod tests {
         let expected = b"0123456789".to_vec();
         let encoded = CodePage::Wpc1256.encode_text(text);
         assert_eq!(encoded, expected);
+
+        // Arabic decimal, thousands separator, and percent
+        assert_eq!(CodePage::Wpc1256.encode_char('٫'), Some(b'.'));
+        assert_eq!(CodePage::Wpc1256.encode_char('٬'), Some(b','));
+        assert_eq!(CodePage::Wpc1256.encode_char('٪'), Some(b'%'));
     }
 }

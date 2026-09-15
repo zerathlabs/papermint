@@ -1,6 +1,6 @@
 {
   "name": "expo-papermint",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "High-performance receipt and label compilation engine for Expo & React Native",
   "main": "build/index.js",
   "types": "build/index.d.ts",
