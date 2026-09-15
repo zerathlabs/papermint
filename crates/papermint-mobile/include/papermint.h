@@ -104,6 +104,25 @@ void papermint_bytes_free(uint8_t* ptr, size_t len);
  */
 uint8_t* papermint_compile_json(const char* json_str, uint8_t dialect, size_t* out_len);
 
+/**
+ * Renders a JSON ticket payload into a virtual SVG vector graphic string.
+ *
+ * Returns a heap-allocated UTF-8 C string. Must be freed with papermint_string_free.
+ */
+char* papermint_compile_json_svg(const char* json_str);
+
+/**
+ * Renders a JSON ticket payload into a responsive HTML preview string.
+ *
+ * Returns a heap-allocated UTF-8 C string. Must be freed with papermint_string_free.
+ */
+char* papermint_compile_json_html(const char* json_str);
+
+/**
+ * Frees a string allocated by papermint_compile_json_svg or papermint_compile_json_html.
+ */
+void papermint_string_free(char* ptr);
+
 #ifdef __cplusplus
 }
 #endif

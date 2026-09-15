@@ -31,7 +31,7 @@ pub use command::*;
 pub use encoder::Encoder;
 pub use error::PapermintError;
 pub use status::{CoverStatus, DrawerStatus, PaperStatus, PrinterStatus};
-pub use tax::{ZatcaInvoice, base64_encode, encode_zatca_tlv, zatca_qr_base64};
+pub use tax::{ZatcaInvoice, base64_decode, base64_encode, encode_zatca_tlv, zatca_qr_base64};
 
 #[cfg(feature = "escpos")]
 pub use dialect::escpos::EscPos;

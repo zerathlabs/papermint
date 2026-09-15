@@ -1,13 +1,14 @@
 use std::ffi::{CString, c_char};
 
 use papermint_mobile::{
-    papermint_bytes_free, papermint_compile_json, papermint_receipt_align,
-    papermint_receipt_barcode, papermint_receipt_beep, papermint_receipt_bold,
-    papermint_receipt_create, papermint_receipt_cut, papermint_receipt_divider,
-    papermint_receipt_encode, papermint_receipt_feed, papermint_receipt_free,
-    papermint_receipt_init, papermint_receipt_open_drawer, papermint_receipt_qr,
-    papermint_receipt_table_row, papermint_receipt_text, papermint_receipt_text_ln,
-    papermint_receipt_underline,
+    papermint_bytes_free, papermint_compile_json, papermint_compile_json_html,
+    papermint_compile_json_svg, papermint_receipt_align, papermint_receipt_barcode,
+    papermint_receipt_beep, papermint_receipt_bold, papermint_receipt_create,
+    papermint_receipt_cut, papermint_receipt_divider, papermint_receipt_encode,
+    papermint_receipt_feed, papermint_receipt_free, papermint_receipt_init,
+    papermint_receipt_open_drawer, papermint_receipt_qr, papermint_receipt_table_row,
+    papermint_receipt_text, papermint_receipt_text_ln, papermint_receipt_underline,
+    papermint_string_free,
 };
 
 #[test]
@@ -178,3 +179,48 @@ fn test_null_safety_and_error_handling() {
     // 5. Null bytes free is safe no-op
     papermint_bytes_free(std::ptr::null_mut(), 0);
 }
+
+#[test]
+fn test_json_render_svg_and_html() {
+    let json = CString::new(
+        r#"{
+            "paper_width": "80mm",
+            "commands": [
+                {"type": "align", "alignment": "center"},
+                {"type": "bold", "enabled": true},
+                {"type": "text_ln", "text": "BOUTIQUE CAFE"},
+                {"type": "bold", "enabled": false},
+                {"type": "divider_double"},
+                {"type": "table_header", "columns": [
+                    {"title": "Item", "width": 16, "align": "left"},
+                    {"title": "Price", "width": 8, "align": "right"}
+                ]},
+                {"type": "row", "cells": ["Espresso", "$3.50"]},
+                {"type": "divider_dotted"},
+                {"type": "cut", "mode": "full"}
+            ]
+        }"#,
+    )
+    .unwrap();
+
+    let svg_ptr = papermint_compile_json_svg(json.as_ptr());
+    assert!(!svg_ptr.is_null());
+    let svg_str = unsafe { std::ffi::CStr::from_ptr(svg_ptr).to_str().unwrap() };
+    assert!(svg_str.contains("<svg"));
+    assert!(svg_str.contains("BOUTIQUE CAFE"));
+    assert!(svg_str.contains("Espresso"));
+    papermint_string_free(svg_ptr);
+
+    let html_ptr = papermint_compile_json_html(json.as_ptr());
+    assert!(!html_ptr.is_null());
+    let html_str = unsafe { std::ffi::CStr::from_ptr(html_ptr).to_str().unwrap() };
+    assert!(html_str.contains("<div") || html_str.contains("<pre") || html_str.contains("<!DOCTYPE html>"));
+    assert!(html_str.contains("BOUTIQUE CAFE"));
+    papermint_string_free(html_ptr);
+
+    // Null safety
+    assert!(papermint_compile_json_svg(std::ptr::null()).is_null());
+    assert!(papermint_compile_json_html(std::ptr::null()).is_null());
+    papermint_string_free(std::ptr::null_mut());
+}
+

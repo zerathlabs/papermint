@@ -19,12 +19,16 @@ class ExpoPapermintModule : Module() {
   }
 
   private external fun nativeCompileTicket(json: String, dialect: Int): ByteArray?
+  private external fun nativeRenderSvg(json: String): String?
+  private external fun nativeRenderHtml(json: String): String?
 
   override fun definition() = ModuleDefinition {
     Name("ExpoPapermint")
 
     Function("hello") {
       "Hello world! 👋"
+    }
+
     Function("compileTicket") { json: String, dialect: String ->
       if (!isLibraryLoaded) {
         throw CodedException("ERR_PAPERMINT_NATIVE", "libpapermint_mobile.so is not loaded in this runtime", null)
@@ -33,6 +37,24 @@ class ExpoPapermintModule : Module() {
       val bytes = nativeCompileTicket(json, dialectCode)
         ?: throw CodedException("ERR_COMPILE_FAILED", "Failed to compile receipt ticket (invalid JSON payload or layout)", null)
       bytes
+    }
+
+    Function("renderSvg") { json: String ->
+      if (!isLibraryLoaded) {
+        throw CodedException("ERR_PAPERMINT_NATIVE", "libpapermint_mobile.so is not loaded in this runtime", null)
+      }
+      val svg = nativeRenderSvg(json)
+        ?: throw CodedException("ERR_RENDER_SVG_FAILED", "Failed to render receipt SVG preview", null)
+      svg
+    }
+
+    Function("renderHtml") { json: String ->
+      if (!isLibraryLoaded) {
+        throw CodedException("ERR_PAPERMINT_NATIVE", "libpapermint_mobile.so is not loaded in this runtime", null)
+      }
+      val html = nativeRenderHtml(json)
+        ?: throw CodedException("ERR_RENDER_HTML_FAILED", "Failed to render receipt HTML preview", null)
+      html
     }
   }
 }
