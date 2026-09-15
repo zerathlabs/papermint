@@ -9,6 +9,14 @@ export default defineConfig({
 		starlight({
 			title: '🌿 papermint',
 			description: 'High-performance, type-safe thermal receipt printing for Rust, Node.js & Mobile',
+			favicon: '/favicon.svg',
+			customCss: ['./src/styles/custom.css'],
+			head: [
+				{
+					tag: 'meta',
+					attrs: { name: 'theme-color', content: '#0b0f19' },
+				},
+			],
 			social: [
 				{ icon: 'github', label: 'GitHub', href: 'https://github.com/zerathlabs/papermint' },
 			],

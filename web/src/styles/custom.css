@@ -1,0 +1,41 @@
+/* ============================================================
+   papermint — Starlight Theme
+   Pure color variables only (Preserves 100% of Starlight components & code highlighting)
+   ============================================================ */
+
+:root {
+  --sl-color-accent-low: #064e3b;
+  --sl-color-accent: #10b981;
+  --sl-color-accent-high: #a7f3d0;
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent-low: #064e3b;
+  --sl-color-accent: #10b981;
+  --sl-color-accent-high: #a7f3d0;
+
+  /* Sleek slate / dark background */
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #f1f5f9;
+  --sl-color-gray-2: #cbd5e1;
+  --sl-color-gray-3: #94a3b8;
+  --sl-color-gray-4: #475569;
+  --sl-color-gray-5: #1e293b;
+  --sl-color-gray-6: #0f172a;
+  --sl-color-black: #0b0f19;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #d1fae5;
+  --sl-color-accent: #059669;
+  --sl-color-accent-high: #064e3b;
+
+  --sl-color-white: #0f172a;
+  --sl-color-gray-1: #1e293b;
+  --sl-color-gray-2: #334155;
+  --sl-color-gray-3: #64748b;
+  --sl-color-gray-4: #94a3b8;
+  --sl-color-gray-5: #e2e8f0;
+  --sl-color-gray-6: #f8fafc;
+  --sl-color-black: #ffffff;
+}
