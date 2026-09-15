@@ -217,7 +217,10 @@ fn test_pc866_cyrillic_transcoding() {
 #[test]
 fn test_wpc1256_arabic_transcoding() {
     let text = "فاتورة";
-    let expected = vec![0xE1, 0xC7, 0xCA, 0xE8, 0xD1, 0xC9];
+    // Official Microsoft CP1256:
+    //   ف U+0641 -> 0xDD, ا U+0627 -> 0xC7, ت U+062A -> 0xCA
+    //   و U+0648 -> 0xE6, ر U+0631 -> 0xD1, ة U+0629 -> 0xC9
+    let expected = vec![0xDD, 0xC7, 0xCA, 0xE6, 0xD1, 0xC9];
 
     // Standard WPC1256
     assert_eq!(CodePage::Wpc1256.encode_text(text), expected);

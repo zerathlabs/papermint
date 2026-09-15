@@ -379,36 +379,163 @@ impl CodePage {
     }
 
     fn encode_wpc1256(ch: char) -> Option<u8> {
-        let code = ch as u32;
-        // Arabic Letters U+0621..=U+063A -> 0xC1..=0xDA
-        if (0x0621..=0x063A).contains(&code) {
-            return Some((0xC1 + (code - 0x0621)) as u8);
-        }
-        // Arabic Letters U+0641..=U+064A -> 0xE1..=0xEA
-        if (0x0641..=0x064A).contains(&code) {
-            return Some((0xE1 + (code - 0x0641)) as u8);
-        }
-        // Arabic Tatweel U+0640 -> 0xDC
-        if code == 0x0640 {
-            return Some(0xDC);
-        }
-        // Arabic Tashkeel U+064B..=U+0652 -> 0xEB..=0xF2
-        if (0x064B..=0x0652).contains(&code) {
-            return Some((0xEB + (code - 0x064B)) as u8);
-        }
-        // Arabic-Indic Digits U+0660..=U+0669 -> Map to ASCII 0..9 for standard thermal heads
-        if (0x0660..=0x0669).contains(&code) {
-            return Some(b'0' + (code - 0x0660) as u8);
-        }
+        // Official Microsoft CP1256 mapping (Unicode Consortium CP1256.TXT).
+        // CP1256 interleaves Arabic letters with Latin characters (e.g. French
+        // accented letters), so the Arabic range is NOT contiguous.
         match ch {
+            // 0x80–0x9F: Symbols, Latin, and Arabic punctuation
             '€' => Some(0x80),
+            'پ' => Some(0x81), // U+067E  Arabic Letter Pe (Persian/Urdu)
+            '‚' => Some(0x82),
+            'ƒ' => Some(0x83),
+            '„' => Some(0x84),
+            '…' => Some(0x85),
+            '†' => Some(0x86),
+            '‡' => Some(0x87),
+            'ˆ' => Some(0x88),
+            '‰' => Some(0x89),
+            'ٹ' => Some(0x8A), // U+0679  Arabic Letter Tteh
+            '‹' => Some(0x8B),
+            'Œ' => Some(0x8C),
+            'چ' => Some(0x8D),        // U+0686  Arabic Letter Tcheh
+            'ژ' => Some(0x8E),        // U+0698  Arabic Letter Jeh
+            'ڈ' => Some(0x8F),        // U+0688  Arabic Letter Ddal
+            'گ' => Some(0x90),        // U+06AF  Arabic Letter Gaf
+            '\u{2018}' => Some(0x91), // '
+            '\u{2019}' => Some(0x92), // '
+            '\u{201C}' => Some(0x93), // "
+            '\u{201D}' => Some(0x94), // "
+            '•' => Some(0x95),
+            '–' => Some(0x96),
+            '—' => Some(0x97),
+            'ک' => Some(0x98), // U+06A9  Arabic Letter Keheh
+            '™' => Some(0x99),
+            'ڑ' => Some(0x9A), // U+0691  Arabic Letter Rreh
+            '›' => Some(0x9B),
+            'œ' => Some(0x9C),
+            '\u{200C}' => Some(0x9D), // Zero-width non-joiner
+            '\u{200D}' => Some(0x9E), // Zero-width joiner
+            'ں' => Some(0x9F),        // U+06BA  Arabic Letter Noon Ghunna
+
+            // 0xA0–0xBF: Latin/Symbols + Arabic punctuation
+            '\u{00A0}' => Some(0xA0), // Non-breaking space
+            '،' => Some(0xA1),        // U+060C  Arabic Comma
+            '¢' => Some(0xA2),
             '£' => Some(0xA3),
+            '¤' => Some(0xA4),
             '¥' => Some(0xA5),
+            '¦' => Some(0xA6),
+            '§' => Some(0xA7),
+            '¨' => Some(0xA8),
+            '©' => Some(0xA9),
+            'ھ' => Some(0xAA), // U+06BE  Arabic Letter Heh Doachashmee
             '«' => Some(0xAB),
+            '¬' => Some(0xAC),
+            '\u{00AD}' => Some(0xAD), // Soft hyphen
+            '®' => Some(0xAE),
+            '¯' => Some(0xAF),
+            '°' => Some(0xB0),
+            '±' => Some(0xB1),
+            '²' => Some(0xB2),
+            '³' => Some(0xB3),
+            '´' => Some(0xB4),
+            'µ' => Some(0xB5),
+            '¶' => Some(0xB6),
+            '·' => Some(0xB7),
+            '¸' => Some(0xB8),
+            '¹' => Some(0xB9),
+            '؛' => Some(0xBA), // U+061B  Arabic Semicolon
             '»' => Some(0xBB),
-            '؟' => Some(0xBF), // Arabic question mark
-            '،' => Some(0xAC), // Arabic comma
-            '؛' => Some(0xBA), // Arabic semicolon
+            '¼' => Some(0xBC),
+            '½' => Some(0xBD),
+            '¾' => Some(0xBE),
+            '؟' => Some(0xBF), // U+061F  Arabic Question Mark
+
+            // 0xC0–0xDB: Arabic letters Hamza through Ghain + Tatweel
+            'ہ' => Some(0xC0), // U+06C1  Arabic Letter Heh Goal
+            'ء' => Some(0xC1), // U+0621  Hamza
+            'آ' => Some(0xC2), // U+0622  Alef with Madda
+            'أ' => Some(0xC3), // U+0623  Alef with Hamza Above
+            'ؤ' => Some(0xC4), // U+0624  Waw with Hamza Above
+            'إ' => Some(0xC5), // U+0625  Alef with Hamza Below
+            'ئ' => Some(0xC6), // U+0626  Yeh with Hamza Above
+            'ا' => Some(0xC7), // U+0627  Alef
+            'ب' => Some(0xC8), // U+0628  Beh
+            'ة' => Some(0xC9), // U+0629  Teh Marbuta
+            'ت' => Some(0xCA), // U+062A  Teh
+            'ث' => Some(0xCB), // U+062B  Theh
+            'ج' => Some(0xCC), // U+062C  Jeem
+            'ح' => Some(0xCD), // U+062D  Hah
+            'خ' => Some(0xCE), // U+062E  Khah
+            'د' => Some(0xCF), // U+062F  Dal
+            'ذ' => Some(0xD0), // U+0630  Thal
+            'ر' => Some(0xD1), // U+0631  Reh
+            'ز' => Some(0xD2), // U+0632  Zain
+            'س' => Some(0xD3), // U+0633  Seen
+            'ش' => Some(0xD4), // U+0634  Sheen
+            'ص' => Some(0xD5), // U+0635  Sad
+            'ض' => Some(0xD6), // U+0636  Dad
+            '×' => Some(0xD7), // U+00D7  Multiplication Sign (NOT Arabic)
+            'ط' => Some(0xD8), // U+0637  Tah
+            'ظ' => Some(0xD9), // U+0638  Zah
+            'ع' => Some(0xDA), // U+0639  Ain
+            'غ' => Some(0xDB), // U+063A  Ghain
+
+            // 0xDC–0xEA: Tatweel, Fa-Waw (interleaved with Latin accents)
+            'ـ' => Some(0xDC), // U+0640  Tatweel
+            'ف' => Some(0xDD), // U+0641  Fa
+            'ق' => Some(0xDE), // U+0642  Qaf
+            'ك' => Some(0xDF), // U+0643  Kaf
+            'à' => Some(0xE0), // U+00E0  Latin Small A with Grave
+            'ل' => Some(0xE1), // U+0644  Lam
+            'â' => Some(0xE2), // U+00E2  Latin Small A with Circumflex
+            'م' => Some(0xE3), // U+0645  Mim
+            'ن' => Some(0xE4), // U+0646  Nun
+            'ه' => Some(0xE5), // U+0647  Ha
+            'و' => Some(0xE6), // U+0648  Waw
+            'ç' => Some(0xE7), // U+00E7  Latin Small C with Cedilla
+            'è' => Some(0xE8), // U+00E8  Latin Small E with Grave
+            'é' => Some(0xE9), // U+00E9  Latin Small E with Acute
+            'ê' => Some(0xEA), // U+00EA  Latin Small E with Circumflex
+
+            // 0xEB–0xEF: More Arabic + Latin
+            'ë' => Some(0xEB), // U+00EB  Latin Small E with Diaeresis
+            'ى' => Some(0xEC), // U+0649  Alef Maksura
+            'ي' => Some(0xED), // U+064A  Yeh
+            'î' => Some(0xEE), // U+00EE  Latin Small I with Circumflex
+            'ï' => Some(0xEF), // U+00EF  Latin Small I with Diaeresis
+
+            // 0xF0–0xFF: Tashkeel (diacritics) interleaved with Latin
+            'ً' => Some(0xF0),         // U+064B  Fathatan
+            'ٌ' => Some(0xF1),         // U+064C  Dammatan
+            'ٍ' => Some(0xF2),         // U+064D  Kasratan
+            'َ' => Some(0xF3),         // U+064E  Fatha
+            'ô' => Some(0xF4),        // U+00F4  Latin Small O with Circumflex
+            'ُ' => Some(0xF5),         // U+064F  Damma
+            'ِ' => Some(0xF6),         // U+0650  Kasra
+            '÷' => Some(0xF7),        // U+00F7  Division Sign
+            'ّ' => Some(0xF8),         // U+0651  Shadda
+            'ù' => Some(0xF9),        // U+00F9  Latin Small U with Grave
+            'ْ' => Some(0xFA),         // U+0652  Sukun
+            'û' => Some(0xFB),        // U+00FB  Latin Small U with Circumflex
+            'ü' => Some(0xFC),        // U+00FC  Latin Small U with Diaeresis
+            '\u{200E}' => Some(0xFD), // Left-to-right mark
+            '\u{200F}' => Some(0xFE), // Right-to-left mark
+            'ے' => Some(0xFF),        // U+06D2  Arabic Letter Yeh Barree
+
+            // Arabic-Indic Digits U+0660..=U+0669: not in CP1256,
+            // fall back to ASCII digits for thermal printer compatibility.
+            '٠' => Some(b'0'),
+            '١' => Some(b'1'),
+            '٢' => Some(b'2'),
+            '٣' => Some(b'3'),
+            '٤' => Some(b'4'),
+            '٥' => Some(b'5'),
+            '٦' => Some(b'6'),
+            '٧' => Some(b'7'),
+            '٨' => Some(b'8'),
+            '٩' => Some(b'9'),
+
             _ => None,
         }
     }
@@ -435,15 +562,75 @@ mod tests {
 
     #[test]
     fn test_wpc1256_arabic_encoding() {
+        // "فاتورة" per official Microsoft CP1256:
+        //   ف U+0641 -> 0xDD
+        //   ا U+0627 -> 0xC7
+        //   ت U+062A -> 0xCA
+        //   و U+0648 -> 0xE6
+        //   ر U+0631 -> 0xD1
+        //   ة U+0629 -> 0xC9
         let text = "فاتورة";
-        let expected = vec![0xE1, 0xC7, 0xCA, 0xE8, 0xD1, 0xC9];
+        let expected = vec![0xDD, 0xC7, 0xCA, 0xE6, 0xD1, 0xC9];
 
-        // Standard WPC1256
-        let encoded_standard = CodePage::Wpc1256.encode_text(text);
-        assert_eq!(encoded_standard, expected);
+        let encoded = CodePage::Wpc1256.encode_text(text);
+        assert_eq!(encoded, expected);
 
         // OEM Custom Table 33 (used by PosBox PB800 / Rongta / Xprinter)
+        // routes through the same WPC1256 encoder.
         let encoded_custom33 = CodePage::Custom(33).encode_text(text);
         assert_eq!(encoded_custom33, expected);
+    }
+
+    #[test]
+    fn test_wpc1256_arabic_punctuation() {
+        // Arabic comma U+060C -> 0xA1
+        assert_eq!(CodePage::Wpc1256.encode_char('،'), Some(0xA1));
+        // Arabic semicolon U+061B -> 0xBA
+        assert_eq!(CodePage::Wpc1256.encode_char('؛'), Some(0xBA));
+        // Arabic question mark U+061F -> 0xBF
+        assert_eq!(CodePage::Wpc1256.encode_char('؟'), Some(0xBF));
+    }
+
+    #[test]
+    fn test_wpc1256_tashkeel() {
+        // Fathatan U+064B -> 0xF0
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{064B}'), Some(0xF0));
+        // Dammatan U+064C -> 0xF1
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{064C}'), Some(0xF1));
+        // Kasratan U+064D -> 0xF2
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{064D}'), Some(0xF2));
+        // Fatha U+064E -> 0xF3
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{064E}'), Some(0xF3));
+        // Damma U+064F -> 0xF5
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{064F}'), Some(0xF5));
+        // Kasra U+0650 -> 0xF6
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{0650}'), Some(0xF6));
+        // Shadda U+0651 -> 0xF8
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{0651}'), Some(0xF8));
+        // Sukun U+0652 -> 0xFA
+        assert_eq!(CodePage::Wpc1256.encode_char('\u{0652}'), Some(0xFA));
+    }
+
+    #[test]
+    fn test_wpc1256_persian_urdu_letters() {
+        // پ U+067E -> 0x81
+        assert_eq!(CodePage::Wpc1256.encode_char('پ'), Some(0x81));
+        // چ U+0686 -> 0x8D
+        assert_eq!(CodePage::Wpc1256.encode_char('چ'), Some(0x8D));
+        // ژ U+0698 -> 0x8E
+        assert_eq!(CodePage::Wpc1256.encode_char('ژ'), Some(0x8E));
+        // گ U+06AF -> 0x90
+        assert_eq!(CodePage::Wpc1256.encode_char('گ'), Some(0x90));
+        // ک U+06A9 -> 0x98
+        assert_eq!(CodePage::Wpc1256.encode_char('ک'), Some(0x98));
+    }
+
+    #[test]
+    fn test_wpc1256_arabic_indic_digits_fallback() {
+        // Arabic-Indic digits are NOT in CP1256, we fall back to ASCII.
+        let text = "٠١٢٣٤٥٦٧٨٩";
+        let expected = b"0123456789".to_vec();
+        let encoded = CodePage::Wpc1256.encode_text(text);
+        assert_eq!(encoded, expected);
     }
 }

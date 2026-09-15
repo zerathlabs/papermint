@@ -214,7 +214,11 @@ fn test_json_render_svg_and_html() {
     let html_ptr = papermint_compile_json_html(json.as_ptr());
     assert!(!html_ptr.is_null());
     let html_str = unsafe { std::ffi::CStr::from_ptr(html_ptr).to_str().unwrap() };
-    assert!(html_str.contains("<div") || html_str.contains("<pre") || html_str.contains("<!DOCTYPE html>"));
+    assert!(
+        html_str.contains("<div")
+            || html_str.contains("<pre")
+            || html_str.contains("<!DOCTYPE html>")
+    );
     assert!(html_str.contains("BOUTIQUE CAFE"));
     papermint_string_free(html_ptr);
 
@@ -223,4 +227,3 @@ fn test_json_render_svg_and_html() {
     assert!(papermint_compile_json_html(std::ptr::null()).is_null());
     papermint_string_free(std::ptr::null_mut());
 }
-
