@@ -32,7 +32,10 @@ export default defineConfig({
 					label: 'Platforms & Ecosystem',
 					items: [
 						{ label: 'Node.js & TypeScript', slug: 'platforms/nodejs' },
-						{ label: 'Mobile (Expo & React Native)', slug: 'platforms/mobile' },
+						{ label: 'Desktop (Electron & Tauri)', slug: 'platforms/desktop' },
+						{ label: 'React Native & Expo', slug: 'platforms/mobile' },
+						{ label: 'Flutter (dart:ffi)', slug: 'platforms/flutter' },
+						{ label: 'Native iOS, Android & KMP', slug: 'platforms/native-mobile' },
 						{ label: 'Print Daemon (HTTP REST)', slug: 'platforms/daemon' },
 						{ label: 'WebUSB (Browser Direct)', slug: 'platforms/webusb' },
 					],

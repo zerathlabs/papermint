@@ -110,7 +110,7 @@ jobs:
 
   github-release:
     name: Publish GitHub Release
-    needs: build-daemon
+    needs: [build-daemon, build-expo-android, build-expo-ios]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -120,6 +120,7 @@ jobs:
       - name: Download Built Artifacts
         uses: actions/download-artifact@v4
         with:
+          pattern: 'papermint*'
           path: release-assets
           merge-multiple: true
 
@@ -261,11 +262,21 @@ jobs:
         run: |
           cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 -o jniLibs build --package papermint-mobile --release
 
+      - name: Package Android Release Archive
+        run: |
+          zip -r papermint-mobile-android-${{ github.ref_name }}.zip jniLibs
+
       - name: Upload Android JNI Libraries
         uses: actions/upload-artifact@v4
         with:
           name: expo-android-jni-libs
           path: jniLibs
+
+      - name: Upload Android Release Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: papermint-mobile-android-${{ github.ref_name }}.zip
+          path: papermint-mobile-android-${{ github.ref_name }}.zip
 
   build-expo-ios:
     name: Build iOS XCFramework
@@ -309,11 +320,21 @@ jobs:
             -headers xcframework-headers \
             -output PapermintMobile.xcframework
 
+      - name: Package iOS Release Archive
+        run: |
+          zip -r papermint-mobile-ios-${{ github.ref_name }}.zip PapermintMobile.xcframework crates/papermint-mobile/include/papermint.h
+
       - name: Upload iOS XCFramework
         uses: actions/upload-artifact@v4
         with:
           name: expo-ios-xcframework
           path: PapermintMobile.xcframework
+
+      - name: Upload iOS Release Zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: papermint-mobile-ios-${{ github.ref_name }}.zip
+          path: papermint-mobile-ios-${{ github.ref_name }}.zip
 
   publish-expo-npm:
     name: Publish expo-papermint to npm

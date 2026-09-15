@@ -1,9 +1,13 @@
 ---
-title: "Mobile & Expo Guide"
-description: "Expo SDK 56+ Inline Modules, React Native TurboModules, and Bluetooth streaming"
+title: "React Native & Expo Guide"
+description: "Expo SDK 56+ Inline Modules, expo-papermint, TurboModules, and Bluetooth streaming"
 ---
 
-# Mobile POS Integration Guide: React Native, Expo & Flutter
+# Mobile POS Integration Guide: React Native & Expo
+
+> [!TIP] Looking for Flutter or Native Mobile?
+> * **Flutter Developers**: See the dedicated [Flutter Integration Guide (`dart:ffi`)](/platforms/flutter/).
+> * **iOS Swift, Android Kotlin & KMP Developers**: See the [Native Mobile & KMP Guide](/platforms/native-mobile/).
 
 `papermint-mobile` is a high-performance C-compatible foreign function interface (FFI) and receipt compilation engine. It enables mobile applications (**React Native**, **Expo SDK 56+**, **Flutter**, **iOS Swift**, and **Android Kotlin**) to generate pixel-perfect thermal receipts in **microseconds**, returning zero-copy raw byte buffers (`Uint8Array` / `byte[]`) ready to stream to portable thermal printers.
 
@@ -25,22 +29,25 @@ Instead, `papermint` follows the **Turbo Engine Pattern**:
 
 ---
 
-## 2. Compiling the Native Library
+## 2. Native Binaries (Pre-compiled vs. Source)
 
-Build the static and dynamic libraries for your mobile target architectures:
+> [!TIP] Using `expo-papermint`?
+> If you are using the official `expo-papermint` npm package, pre-compiled Android `.so` libraries and iOS `PapermintMobile.xcframework` are **already pre-bundled inside the package**. You do not need to install Rust or compile anything!
+>
+> If you are building a custom bare module or using other mobile frameworks:
+> * **Download Pre-built**: Grab `papermint-mobile-android-v*.zip` or `papermint-mobile-ios-v*.zip` from [GitHub Releases](https://github.com/zerathlabs/papermint/releases).
+> * **Build from Source**: Use `cargo-ndk` (Android) or `cargo build` (iOS) as shown below:
 
 ```bash
-# Build desktop / development binaries
-cargo build --package papermint-mobile --release
-
 # Android (arm64-v8a, armeabi-v7a, x86_64) via cargo-ndk
-cargo ndk -t arm64-v8a -t armeabi-v7a build --package papermint-mobile --release
+cargo ndk -t arm64-v8a -t armeabi-v7a -t x86_64 build --package papermint-mobile --release
 
-# iOS (aarch64-apple-ios, aarch64-apple-ios-sim) via cargo-lipo
+# iOS (aarch64-apple-ios, aarch64-apple-ios-sim)
 cargo build --package papermint-mobile --target aarch64-apple-ios --release
+cargo build --package papermint-mobile --target aarch64-apple-ios-sim --release
 ```
 
-The output contains:
+The compiled output contains:
 * **Header**: `crates/papermint-mobile/include/papermint.h`
 * **Static Library**: `libpapermint_mobile.a`
 * **Dynamic Library**: `libpapermint_mobile.so` (Android) / `libpapermint_mobile.dylib` (iOS/macOS)

@@ -9,6 +9,9 @@ description: "Native N-API bindings for papermint"
 
 It runs with native C++ speed directly in Node.js and Electron without requiring Python or native build chains.
 
+> [!TIP] Building Desktop POS Apps?
+> See our dedicated [Desktop POS Guide (Electron & Tauri)](/platforms/desktop/) for IPC patterns, hardware transports, and Tauri Rust commands.
+
 ---
 
 ## Installation
