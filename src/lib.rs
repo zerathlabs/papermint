@@ -23,8 +23,7 @@ pub mod transport;
 #[cfg(feature = "async")]
 pub mod printer;
 
-// ── Public re-exports for ergonomic top-level imports ──
-
+// Re-exports
 pub use charset::InternationalCharset;
 pub use codepage::CodePage;
 pub use command::*;
@@ -57,6 +56,9 @@ pub use transport::usb::{UsbPrinterInfo, UsbTransport};
 
 #[cfg(feature = "async")]
 pub use transport::vec_sink::VecSink;
+
+#[cfg(feature = "label")]
+pub use papermint_label as label;
 
 #[cfg(feature = "image")]
 pub mod image;

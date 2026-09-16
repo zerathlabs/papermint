@@ -1,0 +1,26 @@
+[package]
+name = "papermint-label"
+version = "0.2.3"
+edition = "2024"
+description = "High-performance 2D thermal label printing engine supporting TSPL and ZPL II"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/zerathlabs/papermint"
+homepage = "https://papermint.zerathlabs.com"
+keywords = ["tspl", "zpl", "label-printer", "barcode", "thermal-printer"]
+categories = ["hardware-support", "encoding"]
+
+[dependencies]
+thiserror = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+unicode-width = "0.2.2"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg"], optional = true }
+
+[dev-dependencies]
+criterion = "0.5"
+
+[features]
+default = ["std", "image"]
+std = []
+
