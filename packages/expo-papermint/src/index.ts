@@ -13,6 +13,14 @@ import type {
 } from './ExpoPapermint.types';
 
 export * from './ExpoPapermint.types';
+export { Label, compileLabel, renderLabelSvg } from './Label';
+export {
+  usePrinterGateway,
+  printLocalOrder,
+  printLocalLabel,
+  PrinterGatewayClient,
+  sendToPrinter,
+} from './gateway';
 
 /**
  * Compiles a receipt ticket specification into ESC/POS or StarPRNT binary wire bytes in ~10 microseconds.

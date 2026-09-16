@@ -56,7 +56,7 @@ bump:
 	@node -e "\
 		const fs = require('fs'); \
 		const v = '$(V)'; \
-		const tomls = ['Cargo.toml', 'crates/papermint-daemon/Cargo.toml', 'crates/papermint-mobile/Cargo.toml', 'crates/papermint-node/Cargo.toml']; \
+		const tomls = ['Cargo.toml', 'crates/papermint-daemon/Cargo.toml', 'crates/papermint-mobile/Cargo.toml', 'crates/papermint-node/Cargo.toml', 'crates/papermint-label/Cargo.toml']; \
 		tomls.forEach(f => { \
 			let c = fs.readFileSync(f, 'utf8'); \
 			c = c.replace(/^version = \".*?\"/m, 'version = \"' + v + '\"'); \

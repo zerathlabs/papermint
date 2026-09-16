@@ -29,6 +29,18 @@ private func papermint_string_free(
   _ ptr: UnsafeMutablePointer<CChar>?
 )
 
+@_silgen_name("papermint_label_compile_json")
+private func papermint_label_compile_json(
+  _ jsonStr: UnsafePointer<CChar>?,
+  _ dialect: UInt8,
+  _ outLen: UnsafeMutablePointer<Int>?
+) -> UnsafeMutablePointer<UInt8>?
+
+@_silgen_name("papermint_label_render_svg_json")
+private func papermint_label_render_svg_json(
+  _ jsonStr: UnsafePointer<CChar>?
+) -> UnsafeMutablePointer<CChar>?
+
 public class ExpoPapermintModule: Module {
   public func definition() -> ModuleDefinition {
     Name("ExpoPapermint")
@@ -77,6 +89,37 @@ public class ExpoPapermintModule: Module {
 
       guard let ptr = papermint_compile_json_html(utf8) else {
         throw Exceptions.Fault("Failed to render receipt HTML preview")
+      }
+
+      let result = String(cString: ptr)
+      papermint_string_free(ptr)
+      return result
+    }
+
+    Function("compileLabel") { (json: String, dialect: String) -> Data in
+      let dialectCode: UInt8 = (dialect.caseInsensitiveCompare("zpl") == .orderedSame) ? 1 : 0
+      var outLen: Int = 0
+
+      guard let utf8 = json.cString(using: .utf8) else {
+        throw Exceptions.InvalidArgument("JSON label payload could not be encoded as UTF-8")
+      }
+
+      guard let ptr = papermint_label_compile_json(utf8, dialectCode, &outLen), outLen > 0 else {
+        throw Exceptions.Fault("Failed to compile label with Papermint engine (invalid layout or syntax)")
+      }
+
+      return Data(bytesNoCopy: ptr, count: outLen, deallocator: .custom { p, len in
+        papermint_bytes_free(p.assumingMemoryBound(to: UInt8.self), len)
+      })
+    }
+
+    Function("renderLabelSvg") { (json: String) -> String in
+      guard let utf8 = json.cString(using: .utf8) else {
+        throw Exceptions.InvalidArgument("JSON label payload could not be encoded as UTF-8")
+      }
+
+      guard let ptr = papermint_label_render_svg_json(utf8) else {
+        throw Exceptions.Fault("Failed to render label SVG preview")
       }
 
       let result = String(cString: ptr)

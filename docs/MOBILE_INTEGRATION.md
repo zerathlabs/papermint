@@ -58,17 +58,37 @@ pnpm add expo-papermint expo-modules-core
 
 #### Usage in TypeScript:
 ```typescript
-import { Receipt } from 'expo-papermint';
+import { Receipt, Label, printLocalOrder, usePrinterGateway } from 'expo-papermint';
 
-const wireBytes: Uint8Array = Receipt.create('80mm')
+// Instant Offline Receipt Printing (5ms, direct over Bluetooth/TCP)
+const receipt = Receipt.create('80mm')
   .title('BLUE CAFE & ROASTERY')
   .subtitle('Order #4092')
   .item('Iced Oat Latte', '$5.50', 1)
   .item('Avocado Toast', '$18.00', 2, '$9.00')
   .total('TOTAL', '$23.50')
   .qr('https://pay.bluecafe.com/4092')
-  .cut()
-  .compile('escpos'); // or 'star'
+  .cut();
+
+await printLocalOrder(bluetoothPrinter, receipt);
+
+// 2D Adhesive Sticker & Label Printing (TSPL & ZPL II)
+const label = Label.create(50, 30)
+  .text(10, 10, 'ICED OAT LATTE', 2, 2)
+  .barcode(10, 45, '4092-01', 'code128', 50, true)
+  .qr(140, 45, 'https://bluecafe.com/order/4092', 4, 'M')
+  .copies(1);
+
+const tsplBytes = label.compile('tspl'); // or label.compile('zpl')
+
+// In-Shop Cloud Gateway Hook (Receives remote orders from Web Dashboard)
+function CashierScreen({ bluetoothPrinter }) {
+  const { isConnected, lastJobId } = usePrinterGateway('shop_downtown_01', bluetoothPrinter, {
+    url: 'wss://api.bluecafe.com/ws/printer',
+  });
+
+  return <Text>Printer Gateway: {isConnected ? '🟢 Online' : '🔴 Offline'}</Text>;
+}
 ```
 
 ---

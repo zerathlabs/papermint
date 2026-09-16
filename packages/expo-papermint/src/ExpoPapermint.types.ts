@@ -102,3 +102,112 @@ export interface ZatcaQrParams {
   totalAmount: string;
   taxAmount: string;
 }
+
+/* 2D Adhesive Label Types (TSPL & ZPL II) */
+
+export type LabelDialect = 'tspl' | 'zpl';
+
+export type LabelBarcodeType = 'code128' | 'code39' | 'ean13' | 'ean8' | 'upca' | 'itf';
+
+export type LabelQrEcc = 'L' | 'M' | 'Q' | 'H';
+
+export type LabelElement =
+  | {
+      type: 'text';
+      x: number;
+      y: number;
+      content: string;
+      x_mult?: number;
+      y_mult?: number;
+    }
+  | {
+      type: 'barcode';
+      x: number;
+      y: number;
+      content: string;
+      format?: LabelBarcodeType;
+      height?: number;
+      readable?: boolean;
+    }
+  | {
+      type: 'qr';
+      x: number;
+      y: number;
+      content: string;
+      cell_width?: number;
+      ecc?: LabelQrEcc;
+    }
+  | {
+      type: 'box';
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      thickness?: number;
+    }
+  | {
+      type: 'line';
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }
+  | {
+      type: 'reverse';
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    };
+
+export interface LabelPayload {
+  width_mm?: number;
+  height_mm?: number;
+  dpi?: number;
+  gap_mm?: number;
+  speed?: number;
+  density?: number;
+  elements?: LabelElement[];
+  print_copies?: number;
+}
+
+/* Cloud Gateway & Hardware Printer Types */
+
+/** Interface for any connected Bluetooth or network printer writer. */
+export interface PrinterWritable {
+  write(data: Uint8Array): Promise<unknown> | unknown;
+}
+
+/** Supported printer targets: an object with .write() or a direct function callback. */
+export type PrinterTarget = PrinterWritable | ((data: Uint8Array) => Promise<unknown> | unknown);
+
+/** Connection and telemetry status of the In-Shop Cloud Gateway. */
+export interface GatewayStatus {
+  connected: boolean;
+  connecting: boolean;
+  shopId?: string;
+  lastJobId?: string;
+  lastJobTime?: Date;
+  error?: string;
+}
+
+/** Options for configuring the In-Shop Cloud Gateway hook. */
+export interface PrinterGatewayOptions {
+  /** Gateway WebSocket URL (e.g. wss://api.yourdomain.com/ws/printer or ws://localhost:8043/ws). */
+  url?: string;
+  /** Unique merchant/store identifier. */
+  shopId?: string;
+  /** Optional JWT or API bearer token for authentication. */
+  token?: string;
+  /** Automatically reconnect if WebSocket drops. Defaults to true. */
+  autoReconnect?: boolean;
+  /** Initial reconnection delay in milliseconds. Defaults to 1000. */
+  reconnectInterval?: number;
+  /** Maximum reconnection backoff delay in milliseconds. Defaults to 30000. */
+  maxReconnectInterval?: number;
+  /** Callback triggered when connection state updates. */
+  onStatusChange?: (status: GatewayStatus) => void;
+  /** Callback triggered when an incoming print job finishes executing. */
+  onJobComplete?: (jobId: string, success: boolean, error?: string) => void;
+}
+
