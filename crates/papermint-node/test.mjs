@@ -1,5 +1,5 @@
 import assert from 'node:assert';
-import { Receipt, Printer, availablePorts, listPrinters, zatcaQrBase64 } from './index.js';
+import { Receipt, Label, Printer, availablePorts, listPrinters, zatcaQrBase64 } from './index.js';
 
 
 
@@ -148,6 +148,37 @@ assert(Buffer.isBuffer(cpBytes) && cpBytes.length > 0, 'CodePage receipt must en
 // Verify that ESC t 50 (wpc1256 standard) and ESC t 33 (custom table 33) were emitted:
 assert(cpBytes.includes(0x1B) && cpBytes.includes(0x74), 'ESC t codepage commands must be present');
 console.log(`   ✅ codePage() and raw() encoded correctly (${cpBytes.length} bytes).`);
+
+// 8. Test 2D Label Printing Engine (TSPL & ZPL)
+console.log('\n8. Testing 2D Label builder (TSPL, ZPL, SVG)...');
+const label = new Label(50.0, 30.0, 'mm')
+  .dpi(203)
+  .gap(3.0, 0.0)
+  .text(16, 16, 'MINT COFFEE', 1, 1)
+  .barcode(16, 60, 'ORD-9021', 'code128', 48, true)
+  .qr(220, 60, 'https://example.com', 4, 'M')
+  .boxRect(10, 10, 380, 220, 2)
+  .copies(1);
+
+assert(label instanceof Label, 'label should be an instance of Label');
+
+const tsplBytes = label.encodeTspl();
+assert(Buffer.isBuffer(tsplBytes) && tsplBytes.length > 0, 'TSPL output must be a Buffer');
+const tsplStr = tsplBytes.toString('utf8');
+assert(tsplStr.includes('SIZE 50.00 mm, 30.00 mm'), 'TSPL must have SIZE');
+assert(tsplStr.includes('MINT COFFEE'), 'TSPL must have text content');
+console.log(`   ✅ Encoded ${tsplBytes.length} TSPL wire bytes.`);
+
+const zplBytes = label.encodeZpl();
+assert(Buffer.isBuffer(zplBytes) && zplBytes.length > 0, 'ZPL output must be a Buffer');
+const zplStr = zplBytes.toString('utf8');
+assert(zplStr.includes('^XA') && zplStr.includes('^XZ'), 'ZPL must have envelope');
+assert(zplStr.includes('MINT COFFEE'), 'ZPL must have text content');
+console.log(`   ✅ Encoded ${zplBytes.length} ZPL wire bytes.`);
+
+const svgPreview = label.renderSvg();
+assert(typeof svgPreview === 'string' && svgPreview.includes('<svg'), 'renderSvg must return valid SVG');
+console.log(`   ✅ renderSvg() generated valid SVG (${svgPreview.length} bytes).`);
 
 console.log('\n🎉 ALL Node.js N-API binding tests passed successfully!');
 

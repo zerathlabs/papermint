@@ -109,6 +109,49 @@ export declare class Receipt {
 
 export type JsReceipt = Receipt
 
+/** A 2D label canvas builder for adhesive stickers, tags, and barcodes. */
+export declare class Label {
+  /**
+   * Creates a new label canvas.
+   *
+   * @param width - Physical width (e.g. 50.0).
+   * @param height - Physical height (e.g. 30.0).
+   * @param unit - Unit: "mm" (default), "inch", or "dots".
+   */
+  constructor(width: number, height: number, unit?: string | undefined | null)
+  /** Sets printhead resolution in dots per inch (default: 203 DPI). */
+  dpi(dpi: number): this
+  /** Sets gap distance and optional offset between labels in millimeters. */
+  gap(gapMm: number, offsetMm?: number | undefined | null): this
+  /** Sets print speed in inches per second (e.g. 2 to 6). */
+  speed(speed: number): this
+  /** Sets print darkness / density (0 to 15). */
+  density(density: number): this
+  /** Sets print direction: false = Normal, true = Inverted. */
+  direction(inverted?: boolean | undefined | null): this
+  /** Appends text at absolute (x, y) dot coordinates. */
+  text(x: number, y: number, content: string, xMult?: number | undefined | null, yMult?: number | undefined | null): this
+  /** Appends a 1D barcode at (x, y). */
+  barcode(x: number, y: number, content: string, barcodeType?: string | undefined | null, height?: number | undefined | null, readable?: boolean | undefined | null): this
+  /** Appends a 2D QR code at (x, y). */
+  qr(x: number, y: number, content: string, cellWidth?: number | undefined | null, ecc?: string | undefined | null): this
+  /** Appends a rectangular bounding box at (x, y). */
+  boxRect(x: number, y: number, width: number, height: number, thickness?: number | undefined | null): this
+  /** Appends a solid separator bar/line at (x, y). */
+  line(x: number, y: number, width: number, height: number): this
+  /** Inverts black/white pixels in a rectangular area. */
+  reverse(x: number, y: number, width: number, height: number): this
+  /** Sets number of copies to print. */
+  copies(count: number): this
+  /** Encodes the canvas into TSPL-II wire bytes (TSC, Xprinter, Rongta, Munbyn). */
+  encodeTspl(): Buffer
+  /** Encodes the canvas into ZPL II wire bytes (Zebra, Citizen, Godex). */
+  encodeZpl(): Buffer
+  /** Renders a virtual SVG sticker preview with die-cut rounded corners. */
+  renderSvg(): string
+}
+export type JsLabel = Label
+
 /** Enumerates available serial / COM ports on the host system. */
 export declare function availablePorts(): NapiResult<Array<string>>
 
