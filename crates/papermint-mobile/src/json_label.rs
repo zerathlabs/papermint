@@ -220,16 +220,16 @@ pub extern "C" fn papermint_label_compile_json(
         None => return std::ptr::null_mut(),
     };
 
-    let mut bytes = if dialect == 1 {
+    let bytes = if dialect == 1 {
         label.encode_zpl()
     } else {
         label.encode_tspl()
     };
 
-    bytes.shrink_to_fit();
-    let len = bytes.len();
-    let ptr = bytes.as_mut_ptr();
-    std::mem::forget(bytes);
+    let mut boxed = bytes.into_boxed_slice();
+    let len = boxed.len();
+    let ptr = boxed.as_mut_ptr();
+    std::mem::forget(boxed);
     unsafe {
         *out_len = len;
     }

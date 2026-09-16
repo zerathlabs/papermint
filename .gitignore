@@ -2,6 +2,7 @@
 /target/
 **/*.rs.bk
 *.bin
+receipt_preview.svg
 
 # IDE
 .idea/

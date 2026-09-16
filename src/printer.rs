@@ -64,6 +64,15 @@ impl<D: Dialect, T: Transport> Printer<D, T> {
         self.print_commands(receipt.commands()).await
     }
 
+    /// Transmits raw binary bytes directly to the underlying transport without encoding.
+    ///
+    /// Ideal for sending pre-encoded TSPL, ZPL II, ESC/POS, or firmware command payloads.
+    pub async fn print_raw(&mut self, data: &[u8]) -> Result<()> {
+        self.transport.write_all(data).await?;
+        self.transport.flush().await?;
+        Ok(())
+    }
+
     /// Queries real-time hardware status telemetry from the printer.
     ///
     /// Transmits the dialect status inquiry command, awaits the response from the transport,

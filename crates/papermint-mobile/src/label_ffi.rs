@@ -236,11 +236,11 @@ pub extern "C" fn papermint_label_encode_tspl(
         return std::ptr::null_mut();
     }
     let l = unsafe { &*handle };
-    let mut bytes = l.inner.encode_tspl();
-    bytes.shrink_to_fit();
-    let len = bytes.len();
-    let ptr = bytes.as_mut_ptr();
-    std::mem::forget(bytes);
+    let bytes = l.inner.encode_tspl();
+    let mut boxed = bytes.into_boxed_slice();
+    let len = boxed.len();
+    let ptr = boxed.as_mut_ptr();
+    std::mem::forget(boxed);
     unsafe {
         *out_len = len;
     }
@@ -257,11 +257,11 @@ pub extern "C" fn papermint_label_encode_zpl(
         return std::ptr::null_mut();
     }
     let l = unsafe { &*handle };
-    let mut bytes = l.inner.encode_zpl();
-    bytes.shrink_to_fit();
-    let len = bytes.len();
-    let ptr = bytes.as_mut_ptr();
-    std::mem::forget(bytes);
+    let bytes = l.inner.encode_zpl();
+    let mut boxed = bytes.into_boxed_slice();
+    let len = boxed.len();
+    let ptr = boxed.as_mut_ptr();
+    std::mem::forget(boxed);
     unsafe {
         *out_len = len;
     }
