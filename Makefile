@@ -60,6 +60,7 @@ bump:
 		tomls.forEach(f => { \
 			let c = fs.readFileSync(f, 'utf8'); \
 			c = c.replace(/^version = \".*?\"/m, 'version = \"' + v + '\"'); \
+			c = c.replace(/papermint-label = \{ version = \".*?\",/g, 'papermint-label = { version = \"' + v + '\",'); \
 			fs.writeFileSync(f, c, 'utf8'); \
 		}); \
 		const pkgPath = 'crates/papermint-node/package.json'; \
