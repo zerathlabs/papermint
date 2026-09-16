@@ -1,6 +1,6 @@
 [package]
 name = "papermint"
-version = "0.2.3"
+version = "0.3.0"
 edition = "2024"
 description = "High-performance, type-safe thermal receipt printing for Rust, Node.js & Mobile"
 license = "MIT"
@@ -33,7 +33,7 @@ image = ["dep:image"]
 label = ["dep:papermint-label"]
 
 [dependencies]
-papermint-label = { version = "0.2.3", path = "crates/papermint-label", optional = true }
+papermint-label = { version = "0.3.0", path = "crates/papermint-label", optional = true }
 thiserror = "2"
 async-trait = { version = "0.1", optional = true }
 tokio = { version = "1", features = ["net", "time", "io-util"], optional = true }

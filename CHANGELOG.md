@@ -1,5 +1,45 @@
 # Changelog
 
+## [0.3.0] - 2026-09-16
+
+### Added
+- **2D Thermal Label & Sticker Printing Engine (`papermint-label`)**:
+  - Full dual-dialect encoding for **TSPL / TSPL-II** (TSC, Xprinter, Munbyn, Rongta, Gprinter) and **ZPL II** (Zebra Technologies, Citizen, Godex).
+  - Fluent `Label` canvas builder with absolute dot/mm positioning:
+    - Text positioning with horizontal and vertical multiplication ratios (`.text()`).
+    - 1D barcodes: Code 128, Code 39, EAN-13, EAN-8, UPC-A, ITF with configurable height and human-readable text toggles (`.barcode()`).
+    - 2D QR codes with custom error correction levels L, M, Q, H and cell sizing (`.qr()`).
+    - Bounding boxes, solid separator bars, and reverse-video highlight badges (`.box()`, `.line()`, `.reverse()`).
+    - Multi-copy batch printing control (`.copies()`).
+  - Virtual SVG vector sticker preview generator (`.render_svg()`) simulating physical die-cut rounded corner adhesive labels.
+  - Complete cross-platform bindings:
+    - Node.js N-API bindings (`Label`, `JsLabel`) with full TypeScript typings.
+    - C-ABI exports (`papermint_label_*`) and Android JNI bridges (`nativeCompileLabel`, `nativeRenderLabelSvg`).
+    - Universal Expo & React Native Module (`expo-papermint`) with fluent TypeScript builder.
+- **Outbound WebSocket Cloud Printing Gateway (`papermint-daemon`)**:
+  - Resilient WebSocket client connecting through NAT/firewalls to central cloud servers (Next.js, Hono, Node.js VPS).
+  - Automatic persistent connection loop with exponential backoff reconnection.
+  - Bidirectional JSON wire protocol supporting `register`, `print_job`, `ack`, `ping`/`pong`, and `status_query`.
+  - Added `--gateway <url>`, `--gateway-token <token>`, and `--gateway-shop <id>` CLI flags and configuration options.
+- **In-Shop Mobile Cloud Gateway & Offline Bluetooth (`packages/expo-papermint`)**:
+  - Added `usePrinterGateway` React hook: connects in-shop cashier / counter mobile devices to cloud print streams and dispatches remote orders to local printers.
+  - Added `printLocalOrder`: instant 5ms offline receipt printing helper over Bluetooth Classic / BLE / TCP.
+  - Added `printLocalLabel`: instant offline 2D adhesive label printing helper.
+  - Added `PrinterGatewayClient`: standalone, headless gateway client for React Native background tasks and headless JS services.
+
+### Refactored
+- **Clean Submodule Architecture**:
+  - Modularized `crates/papermint-mobile` from a 1,785-line monolithic file into clean, single-responsibility submodules (`memory.rs`, `receipt_ffi.rs`, `label_ffi.rs`, `json_receipt.rs`, `json_label.rs`, `jni.rs`).
+  - Modularized `crates/papermint-node` from a 1,100-line monolithic file into `receipt.rs`, `label.rs`, `printer.rs`, `types.rs`, and `lib.rs`.
+  - Modularized `crates/papermint-daemon` into `cli.rs`, `models.rs`, `executor.rs`, `gateway.rs`, and `routes.rs`.
+  - Maintained 100% C-ABI, N-API, and REST route parity with zero regressions across 120+ unit and integration tests.
+
+### Fixed
+- **Release & Package Publishing Pipeline**:
+  - Synchronized crates.io publishing order in GitHub Actions release workflow so `papermint-label` is published and indexed before `papermint`.
+  - Added manifest version constraints for internal path dependencies to ensure seamless `cargo publish` compliance.
+  - Updated `Makefile` `make bump` script to synchronize versions across all 5 workspace crates, npm packages, iOS podspec, and Android gradle files.
+
 ## [0.2.3] - 2026-09-15
 
 ### Added
