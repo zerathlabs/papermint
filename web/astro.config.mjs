@@ -51,6 +51,8 @@ export default defineConfig({
 				{
 					label: 'Guides & Compliance',
 					items: [
+						{ label: '2D Label & Barcode Printing', slug: 'guides/label-printing' },
+						{ label: 'Cloud & Remote WebSocket Printing', slug: 'guides/cloud-printing' },
 						{ label: 'E-Invoicing (ZATCA & UAE FTA)', slug: 'guides/e-invoicing' },
 						{ label: 'Virtual Receipt Previewer', slug: 'guides/receipt-previewer' },
 					],

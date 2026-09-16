@@ -73,7 +73,7 @@ Add `papermint` to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-papermint = "0.1"
+papermint = "0.2"
 tokio = { version = "1", features = ["full"] }
 ```
 
@@ -156,6 +156,7 @@ async fn test_my_receipt() {
 | `std` | **Yes** | Standard library support and `std::io::Error` wrapping |
 | `escpos` | **Yes** | Epson ESC/POS dialect encoder |
 | `star` | **Yes** | StarPRNT / Star Line Mode dialect encoder |
+| `label` | **Yes** | 2D label printing engine (TSPL & ZPL II) via `papermint-label` |
 | `async` | **Yes** | Asynchronous traits and `Printer` orchestrator |
 | `tcp` | **Yes** | Tokio async TCP transport (`TcpTransport`) |
 | `serial` | No | Asynchronous serial RS-232 / COM port transport (`SerialTransport`) |
@@ -198,7 +199,7 @@ Enable the `image` feature to print logos, graphics, and coupons directly from P
 
 ```toml
 [dependencies]
-papermint = { version = "0.1", features = ["image"] }
+papermint = { version = "0.2", features = ["image"] }
 ```
 
 ```rust
@@ -460,12 +461,48 @@ curl -X POST http://127.0.0.1:8080/api/print \
   }'
 ```
 
+#### Cloud WebSocket Gateway Mode:
+`papermintd` also features an outbound persistent WebSocket client that connects out through retail store NAT routers to your cloud API with automatic exponential backoff:
+```bash
+papermintd \
+  --gateway "wss://pos-api.yourbrand.com/ws/printer/shop_042" \
+  --token "sk_live_secret_token" \
+  --shop-id "shop_042" \
+  --printer "tcp://192.168.1.200:9100"
+```
+
+---
+
+### 12. 2D Adhesive Label Printing (`papermint-label`)
+
+High-speed 2D coordinate canvas label printing for barcode stickers, coffee cup tags, shipping labels, and shelf tags supporting **TSPL / TSPL-II** (TSC, Xprinter, Rongta, Munbyn) and **ZPL II** (Zebra, Citizen, Godex):
+
+```rust
+use papermint::label::{BarcodeType, Direction, Label, QrErrorCorrection, Unit};
+
+let label = Label::new(50.0, 30.0) // 50mm x 30mm sticker
+    .gap(3.0, 0.0)
+    .direction(Direction::Normal)
+    .text(16, 16, "3", 1, "ORGANIC OAT LATTE")
+    .barcode(16, 70, BarcodeType::Code128, 48, "ORD-9021")
+    .qr(280, 60, 4, "https://example.com", QrErrorCorrection::M)
+    .box_outline(10, 10, 380, 220, 2)
+    .copies(1);
+
+// Compile to vendor wire bytes:
+let tspl_bytes = label.encode_tspl(); // Xprinter / TSC
+let zpl_bytes  = label.encode_zpl();  // Zebra ZD420 / ZT411
+
+// Or render an instant SVG vector preview with die-cut rounded corners:
+let svg_preview = label.render_svg();
+```
+
 ---
 
 ## Documentation & Guides
 
 - [Architecture & Multi-Crate Workspace](docs/ARCHITECTURE.md) — 3-layer architecture, atomic state tracking, and Unicode column mathematics.
 - [Mobile POS & React Native Guide](docs/MOBILE_INTEGRATION.md) — Expo SDK 56+ Inline Modules, C-ABI FFI, and Bluetooth Classic/BLE streaming.
-- [Print Daemon HTTP REST API](docs/DAEMON_API.md) — `papermintd` endpoints, JSON ticket schemas, and hardware sensor telemetry.
+- [Print Daemon HTTP REST API & Cloud Gateway](docs/DAEMON_API.md) — `papermintd` endpoints, JSON ticket schemas, and WebSocket gateway.
 - [Hardware & Protocol Specification](docs/HARDWARE_COMMUNICATION.md) — Wire byte sequences, electrical drawer pulses, and QR symbology.
 - [Supported Hardware & Connection Guide](docs/SUPPORTED_HARDWARE.md) — Tested printer models, driverless USB (`udev` rules), RS-232, and cash drawer pins.

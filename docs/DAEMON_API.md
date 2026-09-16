@@ -189,3 +189,66 @@ Sends an electrical solenoid kick pulse to open the cash drawer.
     "message": "Cash drawer kick command sent to Pin 2"
   }
   ```
+
+---
+
+## 3. Cloud & Remote WebSocket Printing Gateway
+
+In addition to serving local HTTP REST requests, `papermintd` can establish an **outbound persistent WebSocket connection** to your cloud API (e.g. Node.js, Hono, Go, or Python). This enables central cloud dashboards and mobile owner apps to print directly to physical in-store printers without port forwarding or dynamic DNS.
+
+### 3.1 Gateway CLI Arguments & Environment Variables
+
+```bash
+papermintd \
+  --gateway "wss://pos-api.yourdomain.com/ws/printer/shop_042" \
+  --token "sk_live_secret_token" \
+  --shop-id "shop_042" \
+  --printer "tcp://192.168.1.200:9100"
+```
+
+| Flag | Env Var | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `--gateway <URL>` | `GATEWAY_URL` | None | Outbound WebSocket server URL (`ws://` or `wss://`) |
+| `--token <TOKEN>` | `GATEWAY_TOKEN` | None | Authentication bearer token sent in registration |
+| `--shop-id <ID>` | `SHOP_ID` | `default` | Shop or branch identifier |
+| `--printer <TARGET>` | `DEFAULT_PRINTER` | `mock` | Default printer target (`tcp://host:port`, `usb:vid:pid`, `serial:port:baud`, `mock`) |
+
+### 3.2 Gateway Resilience
+- **Exponential Backoff**: If network or cloud connection drops, `papermintd` automatically reconnects (1s, 2s, 4s, ... up to 30s).
+- **Dual Mode**: `papermintd` simultaneously maintains the outbound WebSocket connection while serving local HTTP REST requests on `http://127.0.0.1:8080`.
+
+### 3.3 Wire Protocol Events
+
+1. **Registration (Daemon $\rightarrow$ Cloud)**:
+   ```json
+   {
+     "event": "register",
+     "version": "0.2.3",
+     "shop_id": "shop_042",
+     "token": "sk_live_secret_token",
+     "capabilities": ["escpos", "star", "tspl", "zpl", "raw"]
+   }
+   ```
+2. **Print Job (Cloud $\rightarrow$ Daemon)**:
+   ```json
+   {
+     "event": "print_job",
+     "job_id": "job_9981",
+     "dialect": "escpos",
+     "ticket": { "title": "MINT BISTRO", ... },
+     "target": "tcp://192.168.1.200:9100"
+   }
+   ```
+3. **Execution Acknowledgement (Daemon $\rightarrow$ Cloud)**:
+   ```json
+   {
+     "event": "ack",
+     "job_id": "job_9981",
+     "success": true,
+     "bytes_sent": 342,
+     "error": null,
+     "mock_preview": null
+   }
+   ```
+4. **Heartbeat & Status (`ping` / `pong` / `status_query`)**:
+   Enables cloud dashboards to monitor real-time printer paper levels, cover state, and drawer status.

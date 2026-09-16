@@ -1,6 +1,4 @@
-// ── error.rs — Structured error types ──
-//
-// Structured, typed error variants using `thiserror` for comprehensive diagnostics.
+//! Structured, typed error variants for papermint diagnostics.
 
 /// All errors that can occur in papermint operations.
 #[derive(Debug, thiserror::Error)]

@@ -283,5 +283,29 @@ If building custom C++ JSI TurboModules or using Flutter `dart:ffi`:
 | `papermint_receipt_beep(handle, count, dur)` | Triggers buzzer beep. |
 | `papermint_receipt_open_drawer(handle)` | Triggers cash drawer kickout pulse. |
 | `papermint_receipt_encode(handle, dialect, out_len)` | Compiles commands into raw byte buffer. |
-| `papermint_compile_json(json, dialect, out_len)` | Compiles JSON ticket into raw byte buffer. |
+| `papermint_compile_json(json, dialect, out_len)` | Compiles legacy JSON ticket into raw byte buffer. |
+| `papermint_compile_receipt_json(json, dialect, out_len)` | Compiles Command IR JSON into raw byte buffer. |
 | `papermint_bytes_free(ptr, len)` | Frees buffer returned by encode/compile functions. |
+| `papermint_string_free(ptr)` | Frees C string returned by preview functions. |
+
+---
+
+## 7. 2D Label Printing C-ABI Reference (`papermint-label`)
+
+For adhesive coffee cup stickers, product barcode tags, and courier shipping labels:
+
+| Function | Description |
+| :--- | :--- |
+| `papermint_label_create(width_mm, height_mm, dpi)` | Allocates 2D label canvas handle (e.g. 50.0, 30.0, 203). |
+| `papermint_label_free(handle)` | Deallocates label handle. |
+| `papermint_label_text(handle, x, y, font, rot, x_mul, y_mul, text)` | Adds 2D text element with coordinate positioning and rotation. |
+| `papermint_label_barcode(handle, x, y, b_type, h, hr, rot, text)` | Adds 1D barcode (Code 128, EAN-13, etc.). |
+| `papermint_label_qr(handle, x, y, cell_size, ecc, rot, text)` | Adds 2D QR Code with error correction (L, M, Q, H). |
+| `papermint_label_box(handle, x, y, w, h, thickness)` | Draws rectangular bounding box. |
+| `papermint_label_bar(handle, x, y, w, h)` | Draws solid black bar or divider. |
+| `papermint_label_reverse(handle, x, y, w, h)` | Inverts black/white pixels in rectangular area. |
+| `papermint_label_print(handle, copies)` | Sets number of label copies to print. |
+| `papermint_label_encode_tspl(handle, out_len)` | Compiles to TSPL/TSPL-II bytes (Xprinter, TSC, Rongta, Munbyn). |
+| `papermint_label_encode_zpl(handle, out_len)` | Compiles to ZPL II bytes (Zebra ZD/ZT series, Citizen, Godex). |
+| `papermint_label_render_svg(handle)` | Returns instant SVG vector sticker preview string. |
+| `papermint_compile_label_json(json, dialect, out_len)` | Compiles JSON label specification into TSPL (`0`) or ZPL (`1`) bytes. |

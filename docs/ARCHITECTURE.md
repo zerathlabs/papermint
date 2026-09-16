@@ -72,11 +72,12 @@ Traditional receipt printing libraries directly emit ESC/POS bytes while constru
 ## 2. Multi-Crate Workspace Architecture
 
 `papermint` is organized as a unified Cargo workspace for maximum versatility:
-1. **`papermint` (Root crate)**: The pure, blazing-fast Rust core library.
-2. **`crates/papermint-node`**: Native Node.js & TypeScript bindings compiled via N-API (`napi-rs`), giving web and electron apps native speed without Python or native build chains.
-3. **`crates/papermint-daemon`**: A lightweight HTTP REST daemon built on Tokio and Axum, allowing web applications, mobile devices, and browser POS systems to print via simple JSON HTTP POST requests.
-4. **`crates/papermint-mobile`**: C-ABI static and dynamic library (`libpapermint_mobile`) for React Native TurboModules, Expo SDK 56+ Inline Modules, Flutter, iOS, and Android.
-5. **`benches/`**: Criterion microbenchmark suite ensuring zero regressions across releases.
+1. **`papermint` (Root crate)**: The pure, blazing-fast Rust core library (ESC/POS, StarPRNT, Arabic CP1256 reshaping, ZATCA e-invoicing, image dithering, and receipt layout).
+2. **`crates/papermint-label`**: High-performance 2D label printing engine supporting TSPL/TSPL-II and ZPL II for adhesive stickers, cup labels, shelf price tags, and shipping waybills, complete with a virtual SVG sticker preview renderer.
+3. **`crates/papermint-node`**: Native Node.js & TypeScript bindings compiled via N-API (`napi-rs`), giving web and electron apps native speed without Python or native build chains. Modularized into clean submodules (`receipt.rs`, `label.rs`, `printer.rs`, `types.rs`).
+4. **`crates/papermint-daemon`**: High-concurrency daemon (`papermintd`) built on Tokio and Axum. Serves both local HTTP REST endpoints and an outbound persistent WebSocket Cloud Gateway for remote printing behind NAT firewalls. Modularized into `cli.rs`, `models.rs`, `executor.rs`, `routes.rs`, and `gateway.rs`.
+5. **`crates/papermint-mobile`**: C-ABI static/dynamic library and JNI bridges for React Native TurboModules, Expo SDK 56+ Inline Modules, Flutter FFI, iOS Swift, and Android Kotlin. Modularized into `receipt_ffi.rs`, `label_ffi.rs`, `json_receipt.rs`, `json_label.rs`, `jni.rs`, and `memory.rs`.
+6. **`benches/`**: Criterion microbenchmark suite ensuring zero regressions across releases.
 
 ---
 

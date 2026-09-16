@@ -1,9 +1,6 @@
-// ── command.rs — The Intermediate Representation ──
-//
-// This is the key differentiator of papermint. Instead of coupling formatting
-// directly to vendor-specific bytes, we define an abstract Command enum.
-//
-//   Layout Engine → Vec<Command> → Dialect Encoder → Vec<u8> → Transport
+//! Command intermediate representation for printer-agnostic receipt construction.
+//!
+//! Layout Engine -> Vec<Command> -> Dialect Encoder -> Vec<u8> -> Transport.
 //
 // A Vec<Command> can be serialized, stored, replayed, or re-encoded for a
 // different printer vendor without touching the original receipt logic.

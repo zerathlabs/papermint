@@ -10,6 +10,7 @@ crate-type = ["cdylib", "staticlib", "rlib"]
 
 [dependencies]
 papermint = { path = "../..", default-features = false, features = ["std", "escpos", "star", "image"] }
+papermint-label = { path = "../papermint-label" }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 jni = { version = "0.21", default-features = false }

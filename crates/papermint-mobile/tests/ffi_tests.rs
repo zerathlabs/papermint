@@ -125,7 +125,7 @@ fn test_json_compiler_escpos_and_star() {
     )
     .unwrap();
 
-    // 1. Test ESC/POS compilation
+    // ESC/POS compilation
     let mut escpos_len: usize = 0;
     let escpos_ptr = papermint_compile_json(json.as_ptr(), 0, &mut escpos_len);
     assert!(!escpos_ptr.is_null());
@@ -139,7 +139,7 @@ fn test_json_compiler_escpos_and_star() {
 
     papermint_bytes_free(escpos_ptr, escpos_len);
 
-    // 2. Test StarPRNT compilation
+    // StarPRNT compilation
     let mut star_len: usize = 0;
     let star_ptr = papermint_compile_json(json.as_ptr(), 1, &mut star_len);
     assert!(!star_ptr.is_null());
@@ -155,28 +155,28 @@ fn test_json_compiler_escpos_and_star() {
 
 #[test]
 fn test_null_safety_and_error_handling() {
-    // 1. Null handle encode
+    // Null handle encode
     let mut out_len: usize = 999;
     let ptr = papermint_receipt_encode(std::ptr::null(), 0, &mut out_len);
     assert!(ptr.is_null());
     assert_eq!(out_len, 0);
 
-    // 2. Null JSON string
+    // Null JSON string
     let mut json_len: usize = 999;
     let json_ptr = papermint_compile_json(std::ptr::null(), 0, &mut json_len);
     assert!(json_ptr.is_null());
     assert_eq!(json_len, 0);
 
-    // 3. Invalid JSON string
+    // Invalid JSON string
     let bad_json = CString::new("{ not valid json !!! }").unwrap();
     let bad_ptr = papermint_compile_json(bad_json.as_ptr(), 0, &mut json_len);
     assert!(bad_ptr.is_null());
     assert_eq!(json_len, 0);
 
-    // 4. Null receipt free is safe no-op
+    // Null receipt free is safe no-op
     papermint_receipt_free(std::ptr::null_mut());
 
-    // 5. Null bytes free is safe no-op
+    // Null bytes free is safe no-op
     papermint_bytes_free(std::ptr::null_mut(), 0);
 }
 
